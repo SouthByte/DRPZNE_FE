@@ -1,0 +1,165 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Header from '../components/Header.astro'
+import SecondaryHeader from '../components/SecondaryHeader.astro'
+import Footer from '../components/Footer.astro'
+import postData from '../data/postData.json'
+import RelatedProducts from '../components/RelatedProducts.astro'
+
+export async function getStaticPaths() {
+  return postData.map(post => ({
+    params: { slug: post.slug }
+  }));
+}
+
+import ImageCarousel from "../components/imageCarousel.astro";
+
+
+const { slug } = Astro.params
+const post = postData.find(p => p.slug === slug)
+
+if (!post) {
+  throw new Error(`Blog post not found for slug: ${slug}`)
+}
+
+const postImages = {
+  title: "SOF Goods Gear Drop",
+  images: [
+    post?.image
+  ]
+};
+
+---
+
+<Layout>
+  <Header />
+  <SecondaryHeader />
+
+  <main style="background-color: #272729; min-height: 100vh; width: 100%" class="p-6 mx-auto text-white">
+    <div class="detailsContainer">
+        <!-- <div>
+             <img src={post.image} alt={post.title} class="rounded mb-6 w-" />
+        </div> -->
+		<ImageCarousel images={[post.image, post.image]} />
+        <div>
+            <h1 class="text-3xl text-center font-bold">{post.title}</h1>
+            <div class="flex flex-row justify-center items-center gap-3 h-20">
+            <div class="flex items-center">
+                <p class="text-gray-400">{post.publishedAt}</p>
+            </div>
+            <div class="flex items-center">
+                <ul class="flex gap-2 flex-wrap">
+                {post.categories.map(category => (
+                    <li class="bg-gray-700 text-sm px-2 py-1 rounded">{category}</li>
+                ))}
+                </ul>
+            </div>
+            </div>
+
+            <p class="mb-4 text-center">{post.description}</p>
+
+            <!-- <div class="mb-4">
+            <strong>Categories:</strong>
+
+            </div> -->
+
+            <!-- <a href={post.productLink} target="_blank" class="text-orange-400 underline mt-4 inline-block">
+            View Product
+            </a> -->
+            <div class="priceContainer pt-3">
+                <div class="bg-gray-700 text-sm px-2 py-1 rounded h-20 flex flex-row justify-center items-center">
+                    <div>
+                        Test
+                    </div>
+                </div>
+                <div class="bg-gray-700 text-sm px-2 py-1 rounded h-20 flex flex-row justify-center items-center">
+                    <div>
+                        Test
+                    </div>
+                </div>
+                <div class="bg-gray-700 text-sm rounded h-20 flex flex-row justify-center items-center">
+                    <div>
+                        Test
+                    </div>
+                </div>
+                <div class="bg-gray-700 text-sm px-2 py-1 rounded h-20 flex flex-row justify-center items-center">
+                    <div>
+                        Test
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+  </main>
+  <!-- <iframe width="420" height="315"
+src="https://www.youtube.com/embed/tgbNymZ7vqY">
+</iframe> -->
+<RelatedProducts />
+
+</div>
+
+  <Footer />
+</Layout>
+
+<style>
+	.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.arrow:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.arrow.left {
+  left: 1rem;
+}
+
+.arrow.right {
+  right: 1rem;
+}
+
+
+
+
+    .detailsContainer{
+        display: grid;
+        grid-template-columns: repeat(2, 500px);
+        gap: 20px;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        width: 100%
+    }
+
+    .priceContainer{
+        display: grid;
+        grid-template-columns: repeat(2, 50%);
+        gap: 10px;
+    }
+</style>

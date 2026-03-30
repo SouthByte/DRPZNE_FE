@@ -1,0 +1,214 @@
+---
+//const { images = [] } = Astro.props; // expects an array of image URLs
+let currentIndex = 0;
+const images: string[] = ['../src/assets/flannel.png', '../src/assets/sangin.png', '../src/assets/chainsaw.png',
+    '../src/assets/flannel.png', '../src/assets/sangin.png', '../src/assets/chainsaw.png'
+]
+
+---
+
+<style>
+.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.2);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.arrow:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.arrow.left {
+  left: 1rem;
+  padding-bottom: 55px;
+}
+
+.arrow.right {
+  right: 1rem;
+  padding-bottom: 55px;
+}
+
+.arrow.rightBig{
+  right: 1rem;
+  padding-bottom: 10px;
+}
+
+.arrow.leftBig{
+  left: 1rem;
+    padding-bottom: 10px;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 100;
+}
+
+.lightbox.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  cursor: zoom-out;
+}
+
+.carouselBottomImages{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.thumbs img{
+    max-width: 20%;
+  border-radius: 0.5rem;
+  transition: opacity 0.5s ease-in-out;
+  margin-right: .5rem;
+  margin-top: .5rem;
+  cursor: pointer;
+}
+
+.imgActive{
+    border-style: solid;
+    border-width: 3px;
+    border-color: var(--color-orange-400);
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.9);
+}
+  .thumb { opacity: 0.6; cursor: pointer; transition: opacity .2s }
+  .thumb.is-active { opacity: 1; outline: 2px solid #f59e0b; }
+  .main { width: 100%; border-radius: .5rem; margin-bottom: .75rem; }
+  .thumbs { display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;}
+</style>
+
+<div>
+<div class="carousel" id="carousel">
+  <button class="arrow left">‹</button>
+
+  <img id="carouselImage" src={images[0]} alt="Carousel Image" loading="lazy" data-prop={images}/>
+
+  <button class="arrow right">›</button>
+</div>
+<div class="carouselBottomImages">
+    <!-- <img id="carouselImage" src={images[0]} alt="Carousel Image" loading="lazy" data-prop={images}/>
+    <img class="imgActive" id="carouselImage" src={images[0]} alt="Carousel Image" loading="lazy" data-prop={images}/> -->
+    <div class="thumbs">
+    {images.map((src: any, i = 0) => (
+        <img
+        src={src}
+        alt={`image ${i+1}`}
+        class={`thumb ${i === 0 ? 'is-active' : ''}`}
+        data-index={i}
+        loading="lazy"
+        />
+    ))}
+    </div>
+</div>
+</div>
+
+
+<div class="lightbox" id="lightbox">
+    <button class="arrow leftBig" style="width: 4rem; height: 5rem" onclick="prevImage()">‹</button>
+  <img id="lightboxImg" src="" alt="Zoomed image" />
+  <button class="arrow rightBig" style="width: 4rem; height: 5rem" onclick="nextImage()">›</button>
+</div>
+
+<script define:vars={{ clientProp: images }}>
+  // ✅ Embed the server-side array into the browser code
+  const myElement = document.getElementById('carouselImage');
+  const imgs = myElement.dataset.prop;
+  let i = 0;
+
+  
+  const imgEl = document.getElementById("carouselImage");
+  const prevBtn = document.querySelector(".arrow.left");
+  const nextBtn = document.querySelector(".arrow.right");
+  const lightbox = document.getElementById("lightbox");
+  const lightboxImg = document.getElementById("lightboxImg");
+  const prevBig = document.querySelector(".leftBig");
+  const nextBig = document.querySelector(".rightBig");
+
+  imgEl.addEventListener("click", () => {
+    console.log("lightbox triggered")
+    lightbox?.classList.add("active");
+    lightboxImg.src = imgEl.src;
+  });
+
+  lightbox?.addEventListener("click", () => {
+    lightbox.classList.remove("active");
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const thumbsContainer = document.querySelector('.thumbs');
+    const thumbs = thumbsContainer.querySelectorAll('img');
+    const main = document.getElementById('carouselImage');
+    let current = 0;
+    console.log(thumbs);
+
+    prevBtn.addEventListener("click", () => setActive(current - 1));
+    nextBtn.addEventListener("click", () => setActive(current + 1));
+
+    function setActive(index) {
+      thumbs[current].classList.remove("is-active");
+      current = (index + thumbs.length) % thumbs.length; // wraps around
+      thumbs[current].classList.add("is-active");
+      main.src = thumbs[current].src;
+    }
+
+    // Lightbox arrows reuse same current index
+    prevBig.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setActive(current - 1);
+      lightboxImg.src = thumbs[current].src;
+    });
+    nextBig.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setActive(current + 1);
+      lightboxImg.src = thumbs[current].src;
+    });
+
+    thumbs.forEach((t, i) => t.addEventListener('click', () => setActive(i)));
+  });
+
+</script>

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Oaxium';
+  src: url('/drpzne_ui/src/assets/fonts/Oxanium-VariableFont_wght.ttf') format('ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Oaxium';
+  src: url('/assets/fonts/DistantGalaxy.woff') format('ttf');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

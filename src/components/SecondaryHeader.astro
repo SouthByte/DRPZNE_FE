@@ -1,0 +1,85 @@
+---
+---
+
+
+<header class="secondary-header p-4">
+
+
+          <div id="T" class="navLink hover:cursor-pointer">TACTICAL</div>
+          <div style="margin-right: 1rem">/</div>
+          <div id="T" class="navLink hover:cursor-pointer">TECHNOLOGY</div>
+          <div style="margin-right: 1rem">/</div>
+          <div id="P" class="navLink hover:cursor-pointer">PROPERTY</div>
+          <div style="margin-right: 1rem">/</div>
+          <div id="F" class="navLink hover:cursor-pointer">FITNESS</div>
+          <div style="margin-right: 1rem">/</div>
+          <div id="v" class="navLink hover:cursor-pointer">VEHICLES</div>
+          <div style="margin-right: 1rem">/</div>
+          <div id="M" onclick="activateColor" class="navLink hover:cursor-pointer">MISC</div>
+          <div style="margin-right: 1rem">/</div>
+          <div id="S" class="navLink hover:cursor-pointer">SUBSTANCE ABUSE</div>
+
+
+</header>
+
+<style>
+.secondary-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+ background-color: transparent;
+    max-height: 80px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    color: white;
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    background-color: #272729;
+    justify-content: center;
+
+  transform: translateY(-100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    transform 0.4s ease-out,
+    visibility 0s linear .4s; /* delay hiding until after opacity */
+    border-bottom: solid 1px white;
+}
+
+.secondary-header.visible {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s; /* reset for smooth entry */
+}
+.navLink {
+  margin-right: 1rem;
+  position: relative;
+  width: fit-content;
+}
+
+</style>
+
+<script>
+  const mainHeader = document.querySelector('.navbar');
+  const secondaryHeader = document.querySelector('.secondary-header');
+
+const observer = new IntersectionObserver(
+  ([entry]) => {
+    if (!entry.isIntersecting) {
+      secondaryHeader!.classList.add('visible');
+    } else {
+      secondaryHeader!.classList.remove('visible');
+    }
+  },
+  { threshold: 0 }
+);
+
+observer.observe(mainHeader!);
+</script>

@@ -1,0 +1,32 @@
+[
+  {
+    "title": "WRMFZY Operator Flannel – New Color Drop",
+    "slug": "wrmfzy-operator-flannel-drop",
+    "publishedAt": "2025-06-01",
+    "description": "WRMFZY drops a new limited edition flannel blending military utility with streetwear aesthetics. From a brand that is pushing the boundaries of military style, this flannel offers a great split between utility and the rising style",
+    "image": "../src/assets/flannel.png",
+    "productLink": "https://wrmfzy.com/product/operator-flannel",
+    "categories": ["Clothing", "Style", "Tactical"],
+    "tags": ["flannel", "veteran-owned", "streetwear"]
+  },
+  {
+    "title": "Sangin Instruments: Neptune Watch Launch",
+    "slug": "sangin-neptune-watch",
+    "publishedAt": "2025-06-02",
+    "description": "The Neptune by Sangin Instruments is engineered for underwater performance with a military-grade titanium casing.",
+    "image": "/images/sangin-neptune.jpg",
+    "productLink": "https://sangininstruments.com/products/neptune",
+    "categories": ["Accessories", "Watches", "Gear"],
+    "tags": ["dive watch", "military gear", "sangin"]
+  },
+  {
+    "title": "Chainsaw Nation – Tactical Sling Pack Now Available",
+    "slug": "chainsaw-tactical-sling-pack",
+    "publishedAt": "2025-06-04",
+    "description": "Chainsaw Nation releases a new tactical sling pack designed for fast access and minimalist carry.",
+    "image": "/images/chainsaw-sling.jpg",
+    "productLink": "https://chainsawnation.com/products/tactical-sling-pack",
+    "categories": ["Gear", "EDC", "Tactical"],
+    "tags": ["bags", "edc", "tactical"]
+  }
+]

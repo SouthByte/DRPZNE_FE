@@ -2,60 +2,293 @@
 import astroLogo from '../assets/astro.svg';
 import background from '../assets/background.svg';
 ---
-
+	<!-- <div class="fixed-left-ad" >
+      <div class="ad-box" style="background-image: url('../src/assets/american_hand.png'); background-size: cover">
+		<div class="instagramSection flex justify-center items-center" style="padding-top: 160px">
+			<img width="30" height="30" src="https://img.icons8.com/material/24/instagram-new--v1.png" alt="instagram-new--v1"/>
+			<div class="text-2xl font-bold text-black">Instagram</div>
+		</div>
+		<div class="instagramSection flex justify-center items-center" style="height: 30%">
+			<img width="24" height="24" src="https://img.icons8.com/material/24/twitterx--v1.png" alt="twitterx--v1"/>
+			<div class="text-2xl font-bold text-black">Twitter</div>
+		</div>
+	  </div>
+    </div> -->
+		    <!-- <div class="fixed-right-ad">
+      <div class="ad-box">Ad Right</div>
+    </div> -->
 <div id="container">
-	<img id="background" src={background.src} alt="" fetchpriority="high" />
-	<main>
-		<section id="hero">
-			<a href="https://astro.build"
-				><img src={astroLogo.src} width="115" height="48" alt="Astro Homepage" /></a
-			>
-			<h1>
-				To get started, open the <code><pre>src/pages</pre></code> directory in your project.
-			</h1>
-			<section id="links">
-				<a class="button" href="https://docs.astro.build">Read our docs</a>
-				<a href="https://astro.build/chat"
-					>Join our Discord <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36"
-						><path
-							fill="currentColor"
-							d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z"
-						></path></svg
-					>
-				</a>
-			</section>
-		</section>
-	</main>
+	<!-- <img id="background" src={background.src} alt="" fetchpriority="high" /> -->
+	<div class="card-container">
+		<div class="bg-cardBackground rounded-lg shadow-lg border-white border-1 h-[550px] w-full">
+			<div class="w-full h-3/5 overflow-hidden rounded-t-md">
+			<img src="../src/assets/flannel.png" alt="Image" class="w-full h-full object-cover" />
+			</div>
+			<div class="h-1/3 p-4 flex flex-col">
+				<div class="flex justify-center align-middle text-rose-50">
+					STYLE / CLOTHING
+				</div>
+				<div class="flex justify-center align-middle">
+					<h3 class="text-xl text-white font-bold mb-4">WRMFZY Operator Flannel</h3>
+				</div>
+				<div class="text-white text-center">
+					<div class="text-white">
+						A veteran owned and operated company known for pushing the boundaries of culture released a new colorway in their 
+					</div>
+				</div>
+				<div class="flex justify-center items-center mt-3">
+					<div class="text-orange-400 flex flex-row gap-4">
+						<a href="#" class="decoration-none">Read More</a>
+						<div class="text-white">or</div>
+						<a href="/wrmfzy-operator-flannel-drop" class="decoration-none">Buy From WRMFZY</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="bg-cardBackground rounded-lg shadow-lg border-white border-1 h-[550px] w-full">
+			<div class="w-full h-3/5 overflow-hidden rounded-t-md">
+			<img src="../src/assets/sangin.png" alt="Image" class="w-full h-full object-cover" />
+			</div>
+			<div class="h-1/3 p-4 flex flex-col">
+				<div class="flex justify-center align-middle text-rose-50">
+					STYLE / ACCESSORIES
+				</div>
+				<div class="flex justify-center align-middle">
+					<h3 class="text-xl text-white font-bold mb-4">WRMFZY Operator Flannel</h3>
+				</div>
+				<div class="text-white text-center">
+					<div class="text-white">From the brand that follows no rules, blending new trends with military style. The combat flannel is your way to stay warm while making a big statement.</div>
+				</div>
+							<div class="flex justify-center items-center mt-3">
+					<div class="text-orange-400 flex flex-row gap-4">
+						<a href="#" class="decoration-none">Read More</a>
+						<div class="text-white">or</div>
+						<a href="#" class="decoration-none">Buy From Sangin</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="bg-cardBackground rounded-lg shadow-lg border-white border-1 h-[550px] w-full">
+			<div class="w-full h-3/5 overflow-hidden rounded-t-lg">
+			<img src="../src/assets/chainsaw.png" alt="Image" class="w-full h-full object-cover" />
+			</div>
+			<div class="h-1/3 p-4 flex flex-col">
+				<div class="flex justify-center align-middle text-rose-50">
+					STYLE / CLOTHING
+				</div>
+				<div class="flex justify-center align-middle">
+					<h3 class="text-xl text-white font-bold mb-4">WRMFZY Operator Flannel</h3>
+				</div>
+				<div class="text-white text-center">
+					<div class="text-white">From the brand that follows no rules, blending new trends with military style. The combat flannel is your way to stay warm while making a big statement.</div>
+				</div>
+				<div class="flex justify-center items-center mt-3">
+					<div class="text-orange-400 flex flex-row gap-4">
+						<a href="#" class="decoration-none">Read More</a>
+						<div class="text-white">or</div>
+						<a href="#" class="decoration-none">Buy From WRMFZY</a>
+					</div>
+				</div>
+			</div>
+    	</div>
+		<div class="bg-cardBackground rounded-lg shadow-lg border-white border-1 h-[550px] w-full">
+			<div class="w-full h-3/5 overflow-hidden rounded-t-lg">
+			<img src="../src/assets/sb_home.png" alt="Image" class="w-full h-full object-cover" />
+			</div>
+			<div class="h-1/3 p-4 flex flex-col">
+				<div class="flex justify-center align-middle text-rose-50">
+					STYLE / CLOTHING
+				</div>
+				<div class="flex justify-center align-middle">
+					<h3 class="text-xl text-white font-bold mb-4">WRMFZY Operator Flannel</h3>
+				</div>
+				<div class="text-white text-center">
+					<div class="text-white">From the brand that follows no rules, blending new trends with military style. The combat flannel is your way to stay warm while making a big statement.</div>
+				</div>
+							<div class="flex justify-center items-center mt-3">
+					<div class="text-orange-400 flex flex-row gap-4">
+						<a href="#" class="decoration-none">Read More</a>
+						<div class="text-white">or</div>
+						<a href="#" class="decoration-none">Buy From Sangin</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="bg-cardBackground rounded-lg shadow-lg border-white border-1 h-[550px] w-full">
+			<div class="w-full h-3/5 overflow-hidden rounded-t-lg">
+				<img src="../src/assets/flannel.png" alt="Image" class="w-full h-full object-cover" />
+			</div>
+			<div class="h-1/3 p-4 flex flex-col">
+				<div class="flex justify-center align-middle text-rose-50">
+					STYLE / CLOTHING
+				</div>
+				<div class="flex justify-center align-middle">
+					<h3 class="text-xl text-white font-bold mb-4">WRMFZY Operator Flannel</h3>
+				</div>
+				<div class="text-white text-center">
+					<div class="text-white">From the brand that follows no rules, blending new trends with military style. The combat flannel is your way to stay warm while making a big statement.</div>
+				</div>
+				<div class="flex justify-center items-center mt-3">
+					<div class="text-orange-400 flex flex-row gap-4">
+						<a href="#" class="decoration-none">Read More</a>
+						<div class="text-white">or</div>
+						<a href="#" class="decoration-none">Buy From WRMFZY</a>
+					</div>
+				</div>
+        	</div>
+    	</div>
+		<div class="bg-cardBackground rounded-lg shadow-lg border-white border-1 h-[550px] w-full">
+			<div class="w-full h-3/5 overflow-hidden rounded-t-lg">
+				<img src="../src/assets/sangin.png" alt="Image" class="w-full h-full object-cover" />
+			</div>
+			<div class="h-1/3 p-4 flex flex-col">
+				<div class="flex justify-center align-middle text-rose-50">
+					STYLE / CLOTHING
+				</div>
+				<div class="flex justify-center align-middle">
+					<h3 class="text-xl text-white font-bold mb-4">WRMFZY Operator Flannel</h3>
+				</div>
+				<div class="text-white text-center">
+					<div class="text-white">From the brand that follows no rules, blending new trends with military style. The combat flannel is your way to stay warm while making a big statement.</div>
+				</div>
+				<div class="flex justify-center items-center mt-3">
+					<div class="text-orange-400 flex flex-row gap-4">
+						<a href="#" class="decoration-none">Read More</a>
+						<div class="text-white">or</div>
+						<a href="#" class="decoration-none">Buy From Sangin</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 
-	<a href="https://astro.build/blog/astro-5/" id="news" class="box">
+<div class="flex align-middle justify-center w-full h-32 bg-transparent" style="background-color: #272729">
+	<div class="items-center text-2xl flex align-center justify-center border-white border-1 rounded-lg w-40 h-14  text-white">
+		<div>Load More</div>
+	</div>
+</div>
+	<!-- <a href="https://astro.build/blog/astro-5/" id="news" class="box">
 		<svg width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg"
 			><path
 				d="M24.667 12c1.333 1.414 2 3.192 2 5.334 0 4.62-4.934 5.7-7.334 12C18.444 28.567 18 27.456 18 26c0-4.642 6.667-7.053 6.667-14Zm-5.334-5.333c1.6 1.65 2.4 3.43 2.4 5.333 0 6.602-8.06 7.59-6.4 17.334C13.111 27.787 12 25.564 12 22.666c0-4.434 7.333-8 7.333-16Zm-6-5.333C15.111 3.555 16 5.556 16 7.333c0 8.333-11.333 10.962-5.333 22-3.488-.774-6-4-6-8 0-8.667 8.666-10 8.666-20Z"
 				fill="#111827"></path></svg
-		>
-		<h2>What's New in Astro 5.0?</h2>
-		<p>
-			From content layers to server islands, click to learn more about the new features and
-			improvements in Astro 5.0
-		</p>
-	</a>
-</div>
-
+		> 
+		<h2>Follow Our Socials</h2>
+		<div class="flex flex-col">
+			<div class="flex flex-row space-x-2">
+				<img width="30" height="30" src="https://img.icons8.com/material/24/instagram-new--v1.png" alt="instagram-new--v1"/>
+				<h4>Instagram</h4>
+			</div>
+			
+			<div class="flex flex-row space-x-2">
+				<img width="24" height="24" src="https://img.icons8.com/material/24/twitterx--v1.png" alt="twitterx--v1"/>
+				<h4>Twitter</h4>
+			</div>
+			<div class="flex flex-row space-x-2">
+				<img width="24" height="24" src="https://img.icons8.com/material/24/tiktok.png" alt="tiktok"/>
+				<h4>TikTok</h4>
+			</div>	
+				<div class="flex flex-row space-x-2">
+				<img width="24" height="24" src="https://img.icons8.com/material/24/facebook-new.png" alt="facebook-new"/>
+				<h4>Facebook</h4>
+			</div>
+		</div>
+	</a> -->
+	<!-- <div id="news" class="box">
+		<div class="instagramSection flex justify-center items-center" style="height: 30%">
+			<img width="30" height="30" src="https://img.icons8.com/material/24/instagram-new--v1.png" alt="instagram-new--v1"/>
+			<div class="text-2xl font-bold">Instagram</div>
+		</div>
+		<div class="instagramSection flex justify-center items-center" style="height: 30%">
+			<img width="24" height="24" src="https://img.icons8.com/material/24/twitterx--v1.png" alt="twitterx--v1"/>
+			<div class="text-2xl font-bold">Twitter</div>
+		</div>
+		<div class="signUpSection flex justify-center items-center" style="height: 40%">
+			<input 
+			type="text"
+			class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
+			placeholder="Submit Email..."
+			id="searchInput"
+			>
+		</div>
+	</div> -->
+	
 <style>
-	#background {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		z-index: -1;
-		filter: blur(100px);
-	}
+
+/* #background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%; 
+  height: 100%; 
+  z-index: -1; 
+  filter: blur(100px);
+  object-fit: cover; 
+} */
+
+
+
+/* Common ad styles */
+:root {
+  --content-width: 1100px;
+  --ad-width: 180px;
+  --gap: 0px;
+}
+
+.fixed-left-ad {
+  position: fixed;
+  top: 50%;
+  left: calc((100vw - var(--content-width)) / 2 - var(--ad-width) - var(--gap));
+  transform: translateY(-50%);
+  z-index: 9999;
+}
+
+.fixed-right-ad {
+  position: fixed;
+  top: 50%;
+  left: calc((98vw + var(--content-width)) / 2 + var(--gap));
+  transform: translateY(-50%);
+  z-index: 9999;
+}
+
+.fixed-left-ad.stop,
+.fixed-right-ad.stop {
+  position:: fixed;
+  top: auto;
+  bottom: 120px;
+  transform: none;
+}
+
+.ad-box {
+  width: var(--ad-width);
+  height: 300px;
+  /* background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px); */
+  border-radius: 16px;
+  border: 1px solid white;
+  color: white;
+}
+
+
+.layout-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 2rem;
+} 
+
 
 	#container {
-		font-family: Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif;
-		height: 100%;
-	}
+      min-height: 100vh;
+	  position: static;       /* or keep relative but with z-index:auto */
+	  z-index: auto;          /* remove the stacking context */
+  	  overflow: visible;      /* don’t clip children */
+	  background-color: #272729
+
+}  
+
 
 	main {
 		height: 100%;
@@ -155,13 +388,14 @@ import background from '../assets/background.svg';
 		background: rgba(255, 255, 255, 1);
 		border-radius: 16px;
 		border: 1px solid white;
+		
 	}
 
 	#news {
 		position: absolute;
-		bottom: 16px;
-		right: 16px;
-		max-width: 300px;
+		bottom: 35%;
+		right: 30px;
+		height: 400px;
 		text-decoration: none;
 		transition: background 0.2s;
 		backdrop-filter: blur(50px);
@@ -171,13 +405,13 @@ import background from '../assets/background.svg';
 		background: rgba(255, 255, 255, 0.55);
 	}
 
-	@media screen and (max-height: 368px) {
-		#news {
+	@media (max-width: 1580px){
+		#news{
 			display: none;
 		}
 	}
 
-	@media screen and (max-width: 768px) {
+	/* @media screen and (max-width: 768px) {
 		#container {
 			display: flex;
 			flex-direction: column;
@@ -206,5 +440,73 @@ import background from '../assets/background.svg';
 		h1 {
 			line-height: 1.5;
 		}
+	} */
+
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(2, 500px);
+  gap: 20px;
+  justify-content: center;
+  padding: 20px;
+  width: 100%
+} 
+
+.card {
+  width:500px; /* Fixed card width */
+  height: 500px; /* Fixed card height */
+  background-color: lightblue; /* Card background for illustration */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Media Query for small screens (mobile-first approach) */
+@media (max-width: 600px) {
+  .card-container {
+    grid-template-columns: 1fr; /* Stack cards in a single column on small screens */
+  }
+}
+
+@media (max-width: 1100px) {
+	.card-container{
+		grid-template-columns: repeat(2, 450px);
 	}
+	.card{
+		width: 450px;
+		height: 450px;
+	}
+	
+}
+
+@media (max-width: 990px) {
+	.card-container{
+		grid-template-columns: repeat(2, 400px);
+	}
+	.card{
+		width: 400px;
+		height: 400px;
+	}
+}
+
+@media (max-width: 880px) {
+	.card-container{
+		grid-template-columns: repeat(2, 350px);
+	}
+	.card{
+		width: 350px;
+		height: 350px;
+	}
+}
+
+@media (max-width: 770px) {
+	.card-container{
+		grid-template-columns: repeat(1);
+	}
+	.card{
+		width: 100%;
+	}
+}
+
+
+
 </style>
+
