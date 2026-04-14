@@ -1,165 +1,464 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import Header from '../components/Header.astro'
-import SecondaryHeader from '../components/SecondaryHeader.astro'
-import Footer from '../components/Footer.astro'
-import postData from '../data/postData.json'
-import RelatedProducts from '../components/RelatedProducts.astro'
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import RelatedProducts from '../components/RelatedProducts.astro';
+import { getPostsSafe, getPostBySlugSafe, type Post } from '../lib/api';
 
 export async function getStaticPaths() {
-  return postData.map(post => ({
-    params: { slug: post.slug }
-  }));
+  const posts = await getPostsSafe();
+  return posts.map(post => ({ params: { slug: post.slug } }));
 }
 
-import ImageCarousel from "../components/imageCarousel.astro";
-
-
-const { slug } = Astro.params
-const post = postData.find(p => p.slug === slug)
+const { slug } = Astro.params;
+const post = await getPostBySlugSafe(slug!);
 
 if (!post) {
-  throw new Error(`Blog post not found for slug: ${slug}`)
+  return Astro.redirect('/404');
 }
 
-const postImages = {
-  title: "SOF Goods Gear Drop",
-  images: [
-    post?.image
-  ]
-};
-
+const images = post.images?.length ? post.images : [post.image];
+const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+});
 ---
 
-<Layout>
+<Layout
+  title={`${post.title} — DRPZNE`}
+  description={post.description}
+  image={post.image}
+>
   <Header />
-  <SecondaryHeader />
 
-  <main style="background-color: #272729; min-height: 100vh; width: 100%" class="p-6 mx-auto text-white">
-    <div class="detailsContainer">
-        <!-- <div>
-             <img src={post.image} alt={post.title} class="rounded mb-6 w-" />
-        </div> -->
-		<ImageCarousel images={[post.image, post.image]} />
-        <div>
-            <h1 class="text-3xl text-center font-bold">{post.title}</h1>
-            <div class="flex flex-row justify-center items-center gap-3 h-20">
-            <div class="flex items-center">
-                <p class="text-gray-400">{post.publishedAt}</p>
-            </div>
-            <div class="flex items-center">
-                <ul class="flex gap-2 flex-wrap">
-                {post.categories.map(category => (
-                    <li class="bg-gray-700 text-sm px-2 py-1 rounded">{category}</li>
-                ))}
-                </ul>
-            </div>
-            </div>
+  <main class="detail-main">
 
-            <p class="mb-4 text-center">{post.description}</p>
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb font-mono" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span>/</span>
+      {post.categories?.[0] && (
+        <>
+          <a href={`/category/${post.categories[0].toLowerCase()}`}>{post.categories[0]}</a>
+          <span>/</span>
+        </>
+      )}
+      <span class="crumb-current">{post.title}</span>
+    </nav>
 
-            <!-- <div class="mb-4">
-            <strong>Categories:</strong>
+    <div class="detail-grid">
 
-            </div> -->
-
-            <!-- <a href={post.productLink} target="_blank" class="text-orange-400 underline mt-4 inline-block">
-            View Product
-            </a> -->
-            <div class="priceContainer pt-3">
-                <div class="bg-gray-700 text-sm px-2 py-1 rounded h-20 flex flex-row justify-center items-center">
-                    <div>
-                        Test
-                    </div>
-                </div>
-                <div class="bg-gray-700 text-sm px-2 py-1 rounded h-20 flex flex-row justify-center items-center">
-                    <div>
-                        Test
-                    </div>
-                </div>
-                <div class="bg-gray-700 text-sm rounded h-20 flex flex-row justify-center items-center">
-                    <div>
-                        Test
-                    </div>
-                </div>
-                <div class="bg-gray-700 text-sm px-2 py-1 rounded h-20 flex flex-row justify-center items-center">
-                    <div>
-                        Test
-                    </div>
-                </div>
-            </div>
+      <!-- LEFT: Image carousel -->
+      <div class="detail-media">
+        <div class="carousel-main-wrap">
+          <img
+            id="mainImage"
+            src={images[0]}
+            alt={post.title}
+            class="main-image"
+            loading="eager"
+            onerror="this.src='/placeholder.jpg'"
+          />
+          {images.length > 1 && (
+            <>
+              <button class="carousel-arrow left" id="prevBtn" aria-label="Previous image">&#8249;</button>
+              <button class="carousel-arrow right" id="nextBtn" aria-label="Next image">&#8250;</button>
+            </>
+          )}
+          <!-- Lightbox trigger -->
+          <button class="zoom-btn" id="zoomBtn" aria-label="View full size">
+            <span class="material-icons">zoom_in</span>
+          </button>
         </div>
+
+        {images.length > 1 && (
+          <div class="thumbnails" id="thumbnails">
+            {images.map((src, i) => (
+              <button
+                class={`thumb-btn ${i === 0 ? 'active' : ''}`}
+                data-index={i}
+                data-src={src}
+                aria-label={`Image ${i + 1}`}
+              >
+                <img src={src} alt={`${post.title} ${i + 1}`} loading="lazy"
+                  onerror="this.src='/placeholder.jpg'" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <!-- RIGHT: Post info -->
+      <div class="detail-info">
+        <!-- Tags -->
+        <div class="detail-cats font-mono">
+          {post.categories?.map(cat => (
+            <a href={`/category/${cat.toLowerCase()}`} class="cat-tag">{cat}</a>
+          ))}
         </div>
+
+        <h1 class="detail-title font-display">{post.title}</h1>
+
+        <div class="detail-meta font-mono">
+          {post.brand && <span class="meta-brand">{post.brand}</span>}
+          <span class="meta-date">{publishedDate}</span>
+        </div>
+
+        <div class="detail-divider"></div>
+
+        <p class="detail-description">{post.description}</p>
+
+        <!-- Price + CTA -->
+        <div class="detail-cta-box">
+          {post.price && (
+            <div class="detail-price font-display">{post.price}</div>
+          )}
+          {post.productLink && (
+            <a
+              href={post.productLink}
+              target="_blank"
+              rel="noopener sponsored"
+              class="btn-buy font-display"
+            >
+              <span>BUY NOW</span>
+              <span class="material-icons">open_in_new</span>
+            </a>
+          )}
+        </div>
+
+        <!-- Tags -->
+        {post.tags?.length > 0 && (
+          <div class="detail-tags font-mono">
+            <span class="tags-label">TAGS:</span>
+            {post.tags.map(tag => (
+              <a href={`/tag/${tag}`} class="tag-pill">#{tag}</a>
+            ))}
+          </div>
+        )}
+
+        <!-- Share -->
+        <div class="detail-share">
+          <span class="share-label font-mono">SHARE:</span>
+          <div class="share-btns">
+            <button class="share-btn" id="shareX" aria-label="Share on X">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.26 5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              X
+            </button>
+            <button class="share-btn" id="shareCopy" aria-label="Copy link">
+              <span class="material-icons" style="font-size:14px">link</span>
+              Copy Link
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </main>
-  <!-- <iframe width="420" height="315"
-src="https://www.youtube.com/embed/tgbNymZ7vqY">
-</iframe> -->
-<RelatedProducts />
 
-</div>
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Image viewer">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">
+      <span class="material-icons">close</span>
+    </button>
+    <button class="lightbox-arrow left" id="lbPrev" aria-label="Previous">&#8249;</button>
+    <img id="lightboxImg" src="" alt="Full size" class="lightbox-img" />
+    <button class="lightbox-arrow right" id="lbNext" aria-label="Next">&#8250;</button>
+  </div>
 
+  <RelatedProducts currentSlug={slug!} currentCategories={post.categories} />
   <Footer />
 </Layout>
 
+<script define:vars={{ images: images }}>
+  let currentIndex = 0;
+
+  const mainImg = document.getElementById('mainImage');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const thumbnails = document.querySelectorAll('.thumb-btn');
+
+  function setImage(index) {
+    currentIndex = (index + images.length) % images.length;
+    mainImg.src = images[currentIndex];
+    lightboxImg.src = images[currentIndex];
+    thumbnails.forEach((t, i) => t.classList.toggle('active', i === currentIndex));
+  }
+
+  // Carousel arrows
+  document.getElementById('prevBtn')?.addEventListener('click', () => setImage(currentIndex - 1));
+  document.getElementById('nextBtn')?.addEventListener('click', () => setImage(currentIndex + 1));
+
+  // Thumbnails
+  thumbnails.forEach(btn => {
+    btn.addEventListener('click', () => setImage(parseInt(btn.dataset.index)));
+  });
+
+  // Lightbox
+  document.getElementById('zoomBtn')?.addEventListener('click', () => {
+    lightboxImg.src = images[currentIndex];
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+  });
+  document.getElementById('lightboxClose')?.addEventListener('click', () => {
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+  });
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) { lightbox.classList.remove('open'); }
+  });
+  document.getElementById('lbPrev')?.addEventListener('click', (e) => { e.stopPropagation(); setImage(currentIndex - 1); });
+  document.getElementById('lbNext')?.addEventListener('click', (e) => { e.stopPropagation(); setImage(currentIndex + 1); });
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (lightbox.classList.contains('open')) {
+      if (e.key === 'ArrowLeft') setImage(currentIndex - 1);
+      if (e.key === 'ArrowRight') setImage(currentIndex + 1);
+      if (e.key === 'Escape') { lightbox.classList.remove('open'); }
+    }
+  });
+
+  // Share
+  const pageUrl = window.location.href;
+  const pageTitle = document.title;
+
+  document.getElementById('shareX')?.addEventListener('click', () => {
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(pageTitle)}&url=${encodeURIComponent(pageUrl)}`, '_blank');
+  });
+  document.getElementById('shareCopy')?.addEventListener('click', () => {
+    navigator.clipboard.writeText(pageUrl).then(() => {
+      const btn = document.getElementById('shareCopy');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<span class="material-icons" style="font-size:14px">check</span> Copied!';
+      setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    });
+  });
+</script>
+
 <style>
-	.carousel {
+.detail-main {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
+  min-height: 80vh;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  font-size: 0.65rem; letter-spacing: 0.08em; color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+.breadcrumb a { color: var(--text-muted); transition: color var(--transition); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb span { color: var(--text-dim); }
+.crumb-current { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
+
+/* Layout */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* Media */
+.detail-media { position: sticky; top: calc(var(--nav-height) + 1rem); }
+
+.carousel-main-wrap {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+  border-radius: var(--radius);
   overflow: hidden;
+  background: var(--bg-card);
+  aspect-ratio: 4/3;
+  border: 1px solid var(--border);
+}
+.main-image {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: opacity 0.2s ease;
+  cursor: zoom-in;
 }
 
-.carousel img {
-  max-width: 100%;
-  border-radius: 0.5rem;
-  transition: opacity 0.5s ease-in-out;
-}
-
-.arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.4);
-  color: white;
-  border: none;
-  font-size: 2rem;
-  width: 2.5rem;
-  height: 2.5rem;
+.carousel-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(0,0,0,0.5); color: white;
+  font-size: 2rem; line-height: 1;
+  width: 2.5rem; height: 2.5rem;
   border-radius: 50%;
-  cursor: pointer;
-  z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition);
+  z-index: 5;
+}
+.carousel-arrow:hover { background: rgba(0,0,0,0.8); }
+.carousel-arrow.left { left: 0.75rem; }
+.carousel-arrow.right { right: 0.75rem; }
+
+.zoom-btn {
+  position: absolute; bottom: 0.75rem; right: 0.75rem;
+  background: rgba(0,0,0,0.5); color: white;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition); z-index: 5;
+}
+.zoom-btn:hover { background: rgba(0,0,0,0.8); }
+.zoom-btn .material-icons { font-size: 18px; }
+
+.thumbnails {
+  display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;
+}
+.thumb-btn {
+  width: 70px; height: 52px; border-radius: 4px; overflow: hidden;
+  border: 2px solid transparent;
+  opacity: 0.6;
+  transition: opacity var(--transition), border-color var(--transition);
+  flex-shrink: 0;
+}
+.thumb-btn.active { border-color: var(--accent); opacity: 1; }
+.thumb-btn:hover { opacity: 0.9; }
+.thumb-btn img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Info panel */
+.detail-info { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.detail-cats { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.cat-tag {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
+  padding: 0.25rem 0.6rem; border-radius: 3px;
+  border: 1px solid var(--border); color: var(--text-muted);
+  transition: all var(--transition);
+}
+.cat-tag:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+.detail-title {
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text);
 }
 
-.arrow:hover {
-  background: rgba(0, 0, 0, 0.6);
+.detail-meta {
+  display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+  font-size: 0.65rem; letter-spacing: 0.08em; color: var(--text-muted);
+}
+.meta-brand {
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0.15rem 0.5rem;
 }
 
-.arrow.left {
-  left: 1rem;
+.detail-divider { height: 1px; background: var(--border); }
+
+.detail-description {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--text-muted);
 }
 
-.arrow.right {
-  right: 1rem;
+/* CTA */
+.detail-cta-box {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
+.detail-price {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+.btn-buy {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 0.85rem 1.75rem;
+  border-radius: 4px;
+  transition: background var(--transition), transform 0.15s ease;
+  margin-left: auto;
+}
+.btn-buy:hover { background: #fb923c; transform: translateY(-1px); }
+.btn-buy .material-icons { font-size: 16px; }
 
+/* Tags */
+.detail-tags {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
+  font-size: 0.65rem; letter-spacing: 0.06em;
+}
+.tags-label { color: var(--text-dim); margin-right: 0.25rem; }
+.tag-pill {
+  color: var(--text-muted);
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: all var(--transition);
+}
+.tag-pill:hover { border-color: var(--text-muted); color: var(--text); }
 
+/* Share */
+.detail-share {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  padding-top: 1rem; border-top: 1px solid var(--border);
+}
+.share-label { font-size: 0.65rem; letter-spacing: 0.12em; color: var(--text-dim); }
+.share-btns { display: flex; gap: 0.5rem; }
+.share-btn {
+  display: flex; align-items: center; gap: 0.35rem;
+  font-size: 0.7rem; font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  color: var(--text-muted);
+  transition: all var(--transition);
+}
+.share-btn:hover { border-color: var(--text); color: var(--text); background: rgba(255,255,255,0.04); }
 
+/* Lightbox */
+.lightbox {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 999;
+  display: none; align-items: center; justify-content: center;
+}
+.lightbox.open { display: flex; }
+.lightbox-img {
+  max-width: 90vw; max-height: 90vh;
+  border-radius: var(--radius);
+  object-fit: contain;
+}
+.lightbox-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: rgba(255,255,255,0.1); color: white;
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition);
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+.lightbox-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.1); color: white;
+  font-size: 2.5rem; line-height: 1;
+  width: 3.5rem; height: 3.5rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition);
+}
+.lightbox-arrow:hover { background: rgba(255,255,255,0.2); }
+.lightbox-arrow.left { left: 1.5rem; }
+.lightbox-arrow.right { right: 1.5rem; }
 
-    .detailsContainer{
-        display: grid;
-        grid-template-columns: repeat(2, 500px);
-        gap: 20px;
-        justify-content: center;
-        padding: 20px;
-        position: relative;
-        width: 100%
-    }
-
-    .priceContainer{
-        display: grid;
-        grid-template-columns: repeat(2, 50%);
-        gap: 10px;
-    }
+/* Responsive */
+@media (max-width: 900px) {
+  .detail-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .detail-media { position: static; }
+  .detail-main { padding: 1rem 1rem 3rem; }
+}
+@media (max-width: 480px) {
+  .detail-cta-box { flex-direction: column; align-items: flex-start; }
+  .btn-buy { margin-left: 0; width: 100%; justify-content: center; }
+}
 </style>

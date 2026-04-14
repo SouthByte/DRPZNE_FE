@@ -1,601 +1,548 @@
 ---
-import tailwind from "tailwindcss"
-import "../styles/global.css";
-import NavWithPopover from '../components/dropDownMenu.astro';
+import '../styles/global.css';
 
-const menus = {
-  TACTICAL: ["Weapons", "HardWare", "Kit", "Appearel", "Accessories"],
-  TECHNOLOGY: ["Comms", "Power", "Optics"],
-  PROPERTY: ["Storage", "Safes"],
-  FITNESS: ["Trucks", "Cars", "Boats", ],
-  VEHICLES: ["Racks", "Recovery"],
-  MISC: ["EDC", "Accessories"],
-  "SUBSTANCE ABUSE": ["Education", "Resources"]
+const categories: Record<string, string[]> = {
+  TACTICAL: ['Weapons', 'Hardware', 'Kit', 'Apparel', 'Accessories'],
+  TECHNOLOGY: ['Comms', 'Power', 'Optics', 'Drones', 'Smart Home'],
+  VEHICLES: ['Trucks', 'Cars', 'Motorcycles', 'Off-Road', 'Mods & Parts'],
+  FITNESS: ['Supplements', 'Workout Gear', 'Recovery', 'Martial Arts'],
+  OUTDOORS: ['Camping', 'Hunting', 'Fishing', 'Survival', 'Overlanding'],
+  HOME: ['Kitchen Gear', 'Workspace', 'Workshop', 'Furniture'],
+  VICES: ['Whiskey', 'Cigars', 'Beer', 'Cannabis'],
+  DROPS: ['New Drops', 'Limited Editions', 'Collabs', 'Flash Sales'],
 };
-
-type Post = {
-  id: number;
-  title: string;
-  email: string;
-  comment: string;
-  dateCreated: string;
-};
-interface searchPost{
-  title: string;
-  imageLink: string;
-}
-type SearchItem = {
-  title: string;
-  description: string;
-  // add other fields if you have them, e.g. url: string;
-};
-
-
-
 ---
 
-<script define:vars={{ menu: menus,}}>
-  document.addEventListener('DOMContentLoaded', () => {
-  // Grab data
-  const menuMap = document.getElementById('menu-data');
-
-  const nav = document.querySelector('.navItem');
-  const pop = document.querySelector('.navbarSearchResults');
-  const list = document.getElementById('menu-list');
-  let activeTrigger = null;
-
-  function openMenu(trigger) {
-    const key = trigger.dataset.key || trigger.textContent?.trim() || '';
-    const items = menu[key] || [];
-    console.log(items, key, menuMap);
-    // Build list
-    list.innerHTML = items.map((label) => (
-      `<li><a href="#" role="menuitem" tabindex="-1">${label}</a></li>`
-    )).join('');
-    if(pop.style.height == "0px"){
-        pop.animate(
-        [
-          { height: "0px" },
-          { height: "200px" }
-        ],
-        {
-            duration: 300,
-            easing: "ease-in-out",
-          }
-        );
-        pop.style.height = '200px';
-        pop.padding = '12px';
-        pop.style.borderBottom = '1px solid white'
-        pop.focus();
-    // Position under trigger
-    // const rect = trigger.getBoundingClientRect();
-    // pop.style.left = `${rect.left + rect.width / 2}px`;
-    // pop.style.top  = `${rect.bottom + 8 + window.scrollY}px`;
-
-    // Toggle ARIA
-    pop.classList.add('visible');
-    pop.setAttribute('aria-hidden', 'false');
-    trigger.setAttribute('aria-expanded', 'true');
-    activeTrigger = trigger;
-  }}
-
-  function closeMenu() {
-    if (!pop.classList.contains('visible')) return;
-    pop.classList.remove('visible');
-    pop.setAttribute('aria-hidden', 'true');
-    if (activeTrigger) {
-      activeTrigger.setAttribute('aria-expanded', 'false');
-      activeTrigger = null;
-    }
-  }
-
-  // Click on a nav link → open/replace menu
-  nav.addEventListener('click', (e) => {
-    const btn = (e.target).closest('.navLink');
-    if (!btn) return;
-
-    // Toggle if same trigger
-    if (activeTrigger === btn && pop.classList.contains('visible')) {
-      closeMenu();
-    } else {
-      openMenu(btn);
-    }
-    console.log(btn);
-  });
-
-  // Click outside to close
-  document.addEventListener('click', (e) => {
-    if (!pop.classList.contains('visible')) return;
-    const t = e.target;
-    if (!pop.contains(t) && !nav.contains(t)) closeMenu();
-  });
-
-  // Escape to close, Arrow nav (optional)
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeMenu();
-    if (!pop.classList.contains('visible')) return;
-
-    const links = Array.from(list.querySelectorAll<HTMLAnchorElement>('a'));
-    const idx = links.indexOf(document.activeElement);
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      links[(idx + 1 + links.length) % links.length]?.focus();
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      links[(idx - 1 + links.length) % links.length]?.focus();
-    }
-  });
-
-  // Reposition on scroll/resize
-  window.addEventListener('scroll', () => { if (activeTrigger) openMenu(activeTrigger); }, { passive: true });
-  window.addEventListener('resize', () => { if (activeTrigger) openMenu(activeTrigger); });
-  })
-
-</script>
-  <div class="navbar p-4">
-      <div>
-          <div class="navHeader">
-          <a href="/"><img style="width: 220px; filter: grayscale(100%)" src="../src/assets/drpznewhitenobg.png" /></a>
-        </div>
-      </div>
-    <div class="navItem">
-      <div id="T" class="navLink hover:cursor-pointer" data-key={"TACTICAL"}>TACTICAL</div>
-      <div style="margin-right: 1rem">/</div>
-      <div id="TE" class="navLink hover:cursor-pointer">TECHNOLOGY</div>
-      <div style="margin-right: 1rem">/</div>
-      <div id="P" class="navLink hover:cursor-pointer">PROPERTY</div>
-      <div style="margin-right: 1rem">/</div>
-      <div id="F" class="navLink hover:cursor-pointer">FITNESS</div>
-      <div style="margin-right: 1rem">/</div>
-      <div id="v" class="navLink hover:cursor-pointer">VEHICLES</div>
-      <div style="margin-right: 1rem">/</div>
-      <div id="M" class="navLink hover:cursor-pointer">MISC</div>
-      <div style="margin-right: 1rem">/</div>
-      <div id="S" class="navLink hover:cursor-pointer">SUBSTANCE ABUSE</div>
-    </div>
-
-  <div class="topNavItem">
-    <input 
-      type="text"
-      class="hidden px-4 py-2 border w-[500px] border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
-      placeholder="Search..."
-      id="searchInput"
-    >
-  <a id="searchIcon" class="flex items-center justify-center" href="#">
-    <i class="material-icons mr-4">search</i>
+<header class="site-header" id="siteHeader">
+  <!-- Logo -->
+  <a href="/" class="header-logo font-oxanium" aria-label="DRPZNE Home">
+    <img src="/src/assets/drpznewhitenobg.png" alt="DRPZNE" class="logo-img" />
   </a>
-    <div class="navButton">Sign Up</div>
+
+  <!-- Desktop Nav -->
+  <nav class="desktop-nav" aria-label="Main navigation">
+    {Object.keys(categories).map((cat) => (
+      <button class="nav-btn" data-cat={cat} aria-expanded="false" aria-haspopup="true">
+        {cat}
+      </button>
+    ))}
+  </nav>
+
+  <!-- Right side -->
+  <div class="header-actions">
+    <!-- Search -->
+    <div class="search-wrapper" id="searchWrapper">
+      <button class="icon-btn" id="searchToggle" aria-label="Search">
+        <span class="material-icons">search</span>
+      </button>
+      <input
+        type="text"
+        class="search-input"
+        id="searchInput"
+        placeholder="Search drops..."
+        autocomplete="off"
+        aria-label="Search"
+      />
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button class="icon-btn hamburger" id="mobileMenuToggle" aria-label="Open menu" aria-expanded="false">
+      <span class="material-icons">menu</span>
+    </button>
   </div>
-  <div
-      id="menu-popover"
-      class="popover"
-      role="menu"
-      aria-hidden="true"
-    >
-      <div class="caret" aria-hidden="true"></div>
-      <ul id="menu-list"></ul>
+
+  <!-- Mega dropdown (desktop) -->
+  <div class="mega-dropdown" id="megaDropdown" aria-hidden="true" role="menu">
+    <ul class="dropdown-list" id="dropdownList"></ul>
   </div>
-</div>
-  <div class="navbarSearchResults gap-3" style="height: 0">
+</header>
 
-    <!-- <ul id="menu-list">
-    </ul> -->
-    <!-- <div class="h-full content-center items-center w-72 flex justify-center align-middle white text-4xl">
-      View All
-    </div> -->
+<!-- Search results bar -->
+<div class="search-results-bar" id="searchResultsBar" aria-live="polite"></div>
+
+<!-- Mobile drawer -->
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<nav class="mobile-drawer" id="mobileDrawer" aria-label="Mobile navigation">
+  <div class="drawer-header">
+    <img src="/src/assets/drpznewhitenobg.png" alt="DRPZNE" style="height:32px;" />
+    <button class="icon-btn" id="drawerClose" aria-label="Close menu">
+      <span class="material-icons">close</span>
+    </button>
   </div>
-  <!-- <div class="dropdownCategories" style="height: 200px; border-bottom: 1px solid white">
-    <div class="h-full text-center w-72 white text-4xl flex flex-col content-center items-center"
-    style="background-image: url('../src/assets/tactical_cat_img.png'); background-size: contain">
-      <div class="text-6xl pt-34">Tactical</div>
-    </div>
-    <div class="h-full text-center w-72 white text-4xl flex flex-col content-center items-center"
-    style="background-image: url('../src/assets/watch_cat_img.png'); background-size: 170px; background-repeat: no-repeat; background-position: center top;">
-      <div class="text-6xl ibm-plex-mono-bold-italic pt-34">EDC</div>
-    </div>
-    <div class="h-full text-center w-72 white text-4xl flex flex-col content-center items-center"
-    style="background-image: url('../src/assets/watch_cat_img.png'); background-size: 170px; background-repeat: no-repeat; background-position: center top;">
-      <div class="text-6xl ibm-plex-mono-bold-italic pt-34">EDC</div>
-    </div>
-    <div class="h-full text-center w-72 white text-4xl flex flex-col content-center items-center"
-    style="background-image: url('../src/assets/tactical_cat_img.png'); background-size: contain">
-      <div class="text-6xl ibm-plex-mono-bold-italic pt-34">Tactical</div>
-    </div>
-        <div class="h-full text-center w-72 white text-4xl flex flex-col content-center items-center"
-    style="background-image: url('../src/assets/tactical_cat_img.png'); background-size: contain">
-      <div class="text-6xl ibm-plex-mono-bold-italic pt-34">Tactical</div>
-    </div>
-  </div> -->
 
+  <!-- Search in mobile -->
+  <div style="padding: 0 1rem 1rem;">
+    <input
+      type="text"
+      class="mobile-search"
+      id="mobileSearchInput"
+      placeholder="Search drops..."
+    />
+  </div>
 
+  <div class="drawer-categories">
+    {Object.entries(categories).map(([cat, subs]) => (
+      <details class="drawer-item">
+        <summary class="drawer-cat font-oxanium">{cat}</summary>
+        <ul class="drawer-subs">
+          {subs.map((sub) => (
+            <li><a href={`/category/${cat.toLowerCase()}/${sub.toLowerCase().replace(/[\s&/]+/g, '-')}`}>{sub}</a></li>
+          ))}
+        </ul>
+      </details>
+    ))}
+  </div>
+</nav>
 
-<script>
+<script define:vars={{ categories }}>
+  // ── Desktop dropdown ──────────────────────────────────────────────
+  const header = document.getElementById('siteHeader');
+  const dropdown = document.getElementById('megaDropdown');
+  const list = document.getElementById('dropdownList');
+  const navBtns = document.querySelectorAll('.nav-btn');
+  let activeBtn = null;
+  let closeTimer = null;
 
-  //On load for the header
-  document.addEventListener('DOMContentLoaded', () => {
-    const icon = document.getElementById('searchIcon');
-    const nav  = document.querySelector('.navItem') as HTMLElement;
-    const input = document.querySelector('#searchInput') as HTMLElement;
-    const classLink = document.querySelector('.navLink') as HTMLElement;
+  function openDropdown(btn) {
+    clearTimeout(closeTimer);
+    const cat = btn.dataset.cat;
+    const items = categories[cat] || [];
 
-    icon?.addEventListener('click', (e) => {
-      e.preventDefault();
-        nav.style.display = 'none';
-        input.style.marginRight = '2rem';
-      //nav?.classList.remove('visible');
-      input?.classList.remove('hidden');
-      input?.focus();
-    });
+    list.innerHTML = items
+      .map(
+        (label) =>
+          `<li><a href="/category/${cat.toLowerCase()}/${label.toLowerCase().replace(/[\s&/]+/g, '-')}" role="menuitem">${label}</a></li>`
+      )
+      .join('');
 
-    input?.addEventListener('focusout', (e) => {
-      if(searchCardContainer.style.height == "0px"){
-        e.preventDefault();
-        nav.style.display = 'flex';
-        input?.classList.add('hidden');
+    navBtns.forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    btn.setAttribute('aria-expanded', 'true');
+    dropdown.classList.add('open');
+    dropdown.setAttribute('aria-hidden', 'false');
+    activeBtn = btn;
+  }
+
+  function closeDropdown() {
+    closeTimer = setTimeout(() => {
+      dropdown.classList.remove('open');
+      dropdown.setAttribute('aria-hidden', 'true');
+      if (activeBtn) {
+        activeBtn.classList.remove('active');
+        activeBtn.setAttribute('aria-expanded', 'false');
+        activeBtn = null;
       }
-    });
+    }, 120);
+  }
 
-    input.addEventListener('input', (event) => {
-      const target = event.target as HTMLInputElement;
-      loadPosts(target.value);
-    });
-    const searchCardContainer = document.querySelector('.navbarSearchResults') as HTMLElement;
-    const resultsBox = document.querySelector('.navbarSearchResults') as HTMLElement;
-    document.addEventListener('mousedown', (event) => {
-      if(searchCardContainer.style.height > "0px"){
-      const clickedInsideInput = input.contains(event.target as Node);
-      const clickedInsideResults = resultsBox.contains(event.target as Node);
-      if (!clickedInsideInput && !clickedInsideResults) {
-        resultsBox.animate(
-        [
-          { height: "200px" },
-          { height: "0px" }
-        ],
-        {
-            duration: 300,
-            easing: "ease-in-out",
-          }
-        );
-        resultsBox.style.height = '0';
-        resultsBox.style.padding = '0';
-        resultsBox.style.borderBottom = '0';
-        resultsBox.innerHTML = '';
-
-        nav.style.display = 'flex';
-        input?.classList.add('hidden');
+  navBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (activeBtn === btn && dropdown.classList.contains('open')) {
+        closeDropdown();
+      } else {
+        openDropdown(btn);
       }
-      }
-
     });
   });
 
-  const searchCardContainer = document.querySelector('.navbarSearchResults') as HTMLElement;
-  function getMaxCardCount(): number {
-    if (!searchCardContainer) return 0;
+  dropdown.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+  dropdown.addEventListener('mouseleave', closeDropdown);
 
-    const containerWidth = searchCardContainer.clientWidth;
+  document.addEventListener('click', (e) => {
+    if (!header.contains(e.target) && !dropdown.contains(e.target)) {
+      closeDropdown();
+    }
+  });
 
-    const cardWidth = 300; // px (adjust to your actual)
-    const maxCards = Math.floor(containerWidth / cardWidth);
-    console.log("macxed card count", maxCards);
-    return maxCards;
-  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDropdown();
+  });
 
-  async function loadPosts(searchString: string): Promise<any> {
-    try{
-      const searchCardContainer = document.querySelector('.navbarSearchResults') as HTMLElement;
-      const searchTerms: string[] = searchString.toLowerCase().split(/\s+/).filter(Boolean);
-      const res = await fetch('src/data/searchResultData.json');
-      var innerHTMLCards = "";
+  // ── Search ────────────────────────────────────────────────────────
+  const searchToggle = document.getElementById('searchToggle');
+  const searchInput = document.getElementById('searchInput');
+  const searchWrapper = document.getElementById('searchWrapper');
+  const resultsBar = document.getElementById('searchResultsBar');
 
-      if(searchCardContainer.style.height == "0px"){
-        searchCardContainer.animate(
-        [
-          { height: "0px" },
-          { height: "200px" }
-        ],
-        {
-            duration: 300,
-            easing: "ease-in-out",
-          }
+  searchToggle.addEventListener('click', () => {
+    searchWrapper.classList.toggle('open');
+    if (searchWrapper.classList.contains('open')) {
+      searchInput.focus();
+    } else {
+      searchInput.value = '';
+      closeResultsBar();
+    }
+  });
+
+  searchInput.addEventListener('focusout', (e) => {
+    if (!resultsBar.contains(e.relatedTarget)) {
+      setTimeout(() => {
+        if (!resultsBar.matches(':hover')) closeResultsBar();
+      }, 200);
+    }
+  });
+
+  let searchDebounce;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => doSearch(searchInput.value), 220);
+  });
+
+  async function doSearch(q) {
+    if (!q.trim()) return closeResultsBar();
+
+    try {
+      const apiBase = window.__DRPZNE_API__ || '';
+      let posts = [];
+
+      if (apiBase) {
+        const res = await fetch(`${apiBase}/posts/search?q=${encodeURIComponent(q)}`);
+        posts = await res.json();
+      } else {
+        const res = await fetch('/src/data/postData.json');
+        const all = await res.json();
+        posts = all.filter((p) =>
+          p.title.toLowerCase().includes(q.toLowerCase()) ||
+          (p.tags || []).some((t) => t.toLowerCase().includes(q.toLowerCase()))
         );
-        searchCardContainer.style.height = '200px';
-        searchCardContainer.style.padding = '12px';
-        searchCardContainer.style.borderBottom = '1px solid white'
-        searchCardContainer.focus();
       }
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const data = (await res.json());
-      // if no search terms, return all
-
-      if (searchTerms.length === 0) {
-        return data;
-      }
-      console.log(data, searchTerms);
-      // filter: every term must exist in title OR description
-      const filtered = data.filter((p: any) =>
-        searchTerms.every((term) =>
-          p.title.toLowerCase().includes(term)                        
-        )
-      );
-
-      const filteredLength = filtered.length;
-
-      filtered.slice(0, getMaxCardCount()).map((element: any) => {
-        innerHTMLCards += `
-          <div class="searchCard bg-cardBackground rounded-lg shadow-lg border-white border-1 h-full w-72 overflow-hidden transition-transform duration-200 hover:scale-105 cursor-pointer">
-            <div class="h-2/3">
-              <img src="${element.imageLink}" class="w-full h-full object-cover" />
-            </div>
-            <div class="h-1/3 flex justify-center items-center">
-              <div>${element.title}</div>
-            </div>
-          </div>
-        `;
-      });
-
-      if(filteredLength > getMaxCardCount()){
-        innerHTMLCards += `
-        <div class="h-full content-center items-center w-72 flex justify-center align-middle white text-4xl">
-          View All
-        </div>`
-      }
-
-      searchCardContainer.innerHTML = (innerHTMLCards)
-
-    }
-    catch(err){
-      console.error('Error loading posts', err);
-      return [];
+      renderResults(posts.slice(0, 6));
+    } catch {
+      closeResultsBar();
     }
   }
 
+  function renderResults(posts) {
+    if (!posts.length) {
+      resultsBar.innerHTML = `<div class="no-results">No results for that search</div>`;
+      resultsBar.classList.add('open');
+      return;
+    }
+
+    resultsBar.innerHTML = posts
+      .map(
+        (p) => `
+      <a href="/${p.slug}" class="search-card">
+        <div class="search-card-img">
+          <img src="${p.image}" alt="${p.title}" loading="lazy" />
+        </div>
+        <div class="search-card-info">
+          <div class="search-card-cat">${(p.categories || []).join(' / ')}</div>
+          <div class="search-card-title">${p.title}</div>
+        </div>
+      </a>`
+      )
+      .join('');
+
+    resultsBar.classList.add('open');
+  }
+
+  function closeResultsBar() {
+    resultsBar.classList.remove('open');
+    resultsBar.innerHTML = '';
+  }
+
+  document.addEventListener('mousedown', (e) => {
+    if (!searchWrapper.contains(e.target) && !resultsBar.contains(e.target)) {
+      closeResultsBar();
+    }
+  });
+
+  // ── Mobile drawer ─────────────────────────────────────────────────
+  const toggle = document.getElementById('mobileMenuToggle');
+  const drawer = document.getElementById('mobileDrawer');
+  const overlay = document.getElementById('mobileOverlay');
+  const drawerClose = document.getElementById('drawerClose');
+
+  function openDrawer() {
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawerFn() {
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  toggle.addEventListener('click', openDrawer);
+  drawerClose.addEventListener('click', closeDrawerFn);
+  overlay.addEventListener('click', closeDrawerFn);
+
+  // Mobile search mirrors desktop
+  const mobileSearch = document.getElementById('mobileSearchInput');
+  mobileSearch.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => doSearch(mobileSearch.value), 220);
+  });
 </script>
 
-
-  <style>
-
-.ibm-plex-mono-bold-italic {
-  font-family: "IBM Plex Mono", monospace;
-  font-weight: 700;
-  font-style: italic;
-}
-
-
-  .dropdownCategories{
-    background-color: transparent;
-    height: 200px;
-    display: flex;
-    width: 100%;
-    color: white;
-    backdrop-filter: blur(20px);
-    z-index: 9999;
-    background-color: #272729;
-    /* border-bottom: 1px solid white; */
-  }
-
-  .navbarSearchResults{
-    background-color: transparent;
-    height: 200px;
-    display: flex;
-    width: 100%;
-    color: white;
-    backdrop-filter: blur(20px);
-    z-index: 9999;
-    background-color: #272729;
-    /* border-bottom: 1px solid white; */
-  }
-
-  .searchCard{
-
-  }
-
-.topNavLink{
-    font-size: 18px;
-    color: white;
-}
-
-.topNavItem{
-    display: flex;
-    flex-direction: row;
-}
-
-.navbar{
-    background-color: transparent;
-    max-height: 120px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    align-items: center;
-    width: 100%;
-    color: white;
-    backdrop-filter: blur(20px);
-    z-index: 1000;
-    background-color: #272729;
-    border-bottom: 1px solid white;
-}
-.navbarBottom{
-    background-color: transparent;
-    max-height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    color: white;
-    backdrop-filter: blur(20px);
-    padding-bottom: 1rem;
-    z-index: 1000;
-    background-color: #272729;
-}    
-
-.navHeader{
-    font-size: 40px;
-    font-weight: 700;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.navItem{
-    display: flex;
-    align-items: center;
-    margin: 2rem;
-}
-
-.navLink {
-  margin-right: 1rem;
-  position: relative;
-  width: fit-content;
-}
-
-.navLink::after {
-  content: "";
-  position: absolute;
-  width: 0%;
-  bottom: 0;
-  left: 0;
-  border-bottom: 1px solid white;
-  transition: width 0.3s ease; /* Fix transition */
-}
-
-.navLink:hover::after {
-  width: 100%;
-}
-
-.navButton{
-    border: solid 1px white;
-    border-radius: 20px;
-    height:fit-content;
-    width: max-content;
-    padding: 10px;
-    font-size: 14px;
-    cursor: pointer;
-    margin-right: 25px;
-}
-
-.navButton:hover{
-    animation: buttonTransition 1s forwards;
-    /* cursor: pointer; */
-}
-
-.navMenuLine{
-    padding-bottom: 5px;
-    border-bottom: 2px white solid;
-}
-
-.navMenu{
-    width: 60px;
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-}
-
-.navMenu:hover > .navMenuLine:nth-child(1){
-    transform: translateY(-10px);
-}
-
-.navMenu:hover > .navMenuLine:nth-child(2){
-    transform: translateY(0);
-}
-
-.navMenu:hover > .navMenuLine:nth-child(3){
-    transform: translateY(10px);
-}
-
-.mainLinks{
-    display: flex;
-
-}
-
-@keyframes buttonTransition{
-    0%{
-        background-color: transparent;
-    }
-    100%{
-        background-color: white;
-        color: black;
-    }
-}
-
-@keyframes searchTransition {
-    0%{
-        display: flex
-    }
-    100%{
-        display: none;
-    }
-}
-
-li{
-    list-style: none;
-}
-
-.overlay{
-    background-color: transparent; 
-    backdrop-filter: blur(20px); 
-    background-image: linear-gradient( 120deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.3) );
+<style>
+  /* ── Header shell ── */
+  .site-header {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
+    top: 0; left: 0; right: 0;
+    height: var(--nav-height);
+    z-index: 900;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0 1.5rem;
+  }
+
+  .logo-img {
+    height: 70px;
+    width: auto;
+    filter: grayscale(1) brightness(2);
+    transition: filter 0.2s;
+  }
+  .logo-img:hover { filter: none; }
+
+  /* ── Desktop nav ── */
+  .desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+  }
+
+  .nav-btn {
+    font-family: 'Oxanium', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover,
+  .nav-btn.active {
+    color: var(--text);
+    background: var(--bg-elevated);
+  }
+
+  /* ── Header right ── */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .icon-btn {
+    color: var(--text-muted);
+    padding: 0.4rem;
+    border-radius: 50%;
+    transition: color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+  }
+  .icon-btn:hover { color: var(--text); background: var(--bg-elevated); }
+
+  /* ── Search ── */
+  .search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .search-input {
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    transition: width 0.3s ease, opacity 0.3s ease;
+  }
+
+  .search-wrapper.open .search-input {
+    width: clamp(180px, 25vw, 320px);
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Mega dropdown ── */
+  .mega-dropdown {
+    position: absolute;
+    top: var(--nav-height);
+    left: 0; right: 0;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: none;
+    z-index: 800;
+  }
+  .mega-dropdown.open { display: block; }
+
+  .dropdown-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+  }
+
+  .dropdown-list a {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 0.3rem 0;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .dropdown-list a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Search results bar ── */
+  .search-results-bar {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0; right: 0;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    z-index: 850;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0 1.5rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .search-results-bar.open {
+    max-height: 240px;
+    padding: 1rem 1.5rem;
+  }
+
+  .search-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    width: 260px;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .search-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .search-card-img {
+    width: 52px;
+    height: 52px;
+    border-radius: 5px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .search-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .search-card-cat { font-size: 0.65rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+  .search-card-title { font-size: 0.8rem; color: var(--text); font-weight: 600; line-height: 1.3; }
+  .no-results { color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0; }
+
+  /* ── Mobile hamburger ── */
+  .hamburger { display: none; }
+
+  /* ── Mobile drawer ── */
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 950;
+    backdrop-filter: blur(4px);
+  }
+  .mobile-overlay.open { display: block; }
+
+  .mobile-drawer {
+    position: fixed;
+    top: 0; left: 0;
+    width: min(320px, 85vw);
     height: 100vh;
-    transition: opacity 0.5s;
-    display: none;
-    z-index: 999;
-}
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    z-index: 960;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+  }
+  .mobile-drawer.open { transform: translateX(0); }
 
-.active {
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+  }
+
+  .mobile-search {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+  }
+  .mobile-search:focus { outline: none; border-color: var(--accent); }
+  .mobile-search::placeholder { color: var(--text-muted); }
+
+  .drawer-item {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .drawer-cat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    list-style: none;
+  }
+  .drawer-cat::-webkit-details-marker { display: none; }
+  .drawer-cat::after { content: '+'; color: var(--text-muted); }
+  details[open] .drawer-cat::after { content: '−'; }
+
+  .drawer-subs {
+    padding: 0 1rem 0.75rem 1.5rem;
+  }
+  .drawer-subs li a {
     display: block;
-}
-
-.navLink active{
-    color: orange;
-
-}
-  /* Popover */
-  .popover {
-    position: fixed; /* easier, positions to viewport coords */
-    min-width: 220px;
-    background: #272729; color: #fff;
-    border: 1px solid white; border-radius: .5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    padding: .5rem;      /* not affected by parent stacking contexts */
-    z-index: 2147483647;        /* very high layer */
-    transform: translateX(-50%); /* center under trigger */
-    display: none;
+    padding: 0.4rem 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    transition: color 0.15s;
   }
-  .popover.visible { display: block; }
+  .drawer-subs li a:hover { color: var(--accent); }
 
-  .popover ul { list-style: none; margin: 0; padding: .25rem 0; }
-  .popover li a {
-    display: block; padding: .5rem .75rem; border-radius: .375rem;
-    color: #e5e7eb; text-decoration: none;
-  }
-  .popover li a:hover,
-  .popover li a:focus { background: #1f2937; outline: none; }
-
-  /* small caret */
-  .caret {
-    position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
-    width: 12px; height: 12px; background: #272729; border-left: 1px solid white; border-top: 1px solid white;
-    rotate: 45deg;
-    z-index: 2147483646;
+  /* ── Responsive breakpoints ── */
+  @media (max-width: 900px) {
+    .desktop-nav { display: none; }
+    .hamburger { display: flex; }
   }
 
-  .searchCard{
-    cursor: pointer; 
+  @media (max-width: 500px) {
+    .site-header { padding: 0 1rem; gap: 0.75rem; }
+    .logo-img { height: 28px; }
   }
-
-  .searchCard:hover{
-    transform: scale(1.02);
-  }
-
-
-
-  
-  </style>
+</style>
