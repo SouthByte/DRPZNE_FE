@@ -1,8 +1,9 @@
 ---
-import { getPostsSafe as getPosts } from '../lib/api';
+import { getPostsSafe as getPosts, getPostsSafe } from '../lib/api';
 import type { Post } from '../lib/api';
 
-const posts: Post[] = await getPosts(1, 12);
+const posts: Post[] = await getPostsSafe({ page: 1, limit: 12 });
+
 ---
 
 <section class="catalog-section">
@@ -55,6 +56,8 @@ const posts: Post[] = await getPosts(1, 12);
 </section>
 
 <script>
+import { nullable } from "astro:schema";
+
   // ── Filter pills ──────────────────────────────────────────────────
   const pills = document.querySelectorAll('.filter-pill');
   const grid = document.getElementById('postsGrid');
@@ -65,15 +68,15 @@ const posts: Post[] = await getPosts(1, 12);
       pill.classList.add('active');
 
       const cat = (pill as HTMLElement).dataset.cat;
-      const cards = grid.querySelectorAll('.post-card');
+      const cards = grid?.querySelectorAll('.post-card');
 
-      cards.forEach((card) => {
+      cards?.forEach((card) => {
         const el = card as HTMLElement;
         if (cat === 'all') {
           el.style.display = '';
         } else {
           const cats = (el.dataset.cats || '').toLowerCase();
-          el.style.display = cats.includes(cat) ? '' : 'none';
+          el.style.display = cats?.includes(cat || "") ? '' : 'none';
         }
       });
     });
@@ -81,29 +84,27 @@ const posts: Post[] = await getPosts(1, 12);
 
   // ── Load more ─────────────────────────────────────────────────────
   let page = 1;
-  const loadBtn = document.getElementById('loadMoreBtn');
-  const loadText = document.getElementById('loadMoreText');
-  const loadSpinner = document.getElementById('loadSpinner');
+const loadBtn = document.getElementById('loadMoreBtn') as HTMLButtonElement;
+const loadText = document.getElementById('loadMoreText')!;
+const loadSpinner = document.getElementById('loadSpinner')!;
 
-  loadBtn.addEventListener('click', async () => {
-    page++;
-    loadText.classList.add('hidden');
-    loadSpinner.classList.remove('hidden');
-    loadBtn.setAttribute('disabled', 'true');
-
+loadBtn?.addEventListener('click', async () => {
+  page++;
+  loadText?.classList.add('hidden');
+  loadSpinner?.classList.remove('hidden');
+  loadBtn.disabled = true;
     try {
-      const apiBase = window.__DRPZNE_API__ || '';
-      let posts = [];
-
-      if (apiBase) {
-        const res = await fetch(`${apiBase}/posts?page=${page}&pageSize=12`);
-        const data = await res.json();
-        posts = Array.isArray(data) ? data : data.data;
-      } else {
-        // No more local pages — hide button
-        loadBtn.style.display = 'none';
-        return;
-      }
+      const cmsUrl = document.documentElement.dataset.cmsUrl || 'http://localhost:3000';
+      const q = new URLSearchParams({
+        'where[status][equals]': 'published',
+        depth: '2',
+        sort: '-publishedAt',
+        limit: '12',
+        page: String(page),
+      });
+      const res = await fetch(`${cmsUrl}/api/posts?${q}`);
+      const data = await res.json();
+      const posts = data.docs ?? [];
 
       if (!posts || posts.length === 0) {
         loadBtn.style.display = 'none';
@@ -130,7 +131,7 @@ const posts: Post[] = await getPosts(1, 12);
               <span class="card-cta">Read More →</span>
             </div>
           </div>`;
-        grid.appendChild(card);
+        grid?.appendChild(card);
       });
 
     } catch (err) {

@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import RelatedProducts from '../components/RelatedProducts.astro';
-import { getPostsSafe, getPostBySlugSafe, type Post } from '../lib/api';
+import { getPostsSafe, getPostBySlugSafe, type Post, getRelatedPostsSafe } from '../lib/api';
 
 export async function getStaticPaths() {
   const posts = await getPostsSafe();
@@ -21,6 +21,8 @@ const images = post.images?.length ? post.images : [post.image];
 const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
 });
+
+const relatedPosts = await getRelatedPostsSafe(slug!, 4);
 ---
 
 <Layout
@@ -164,8 +166,8 @@ const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
     <button class="lightbox-arrow right" id="lbNext" aria-label="Next">&#8250;</button>
   </div>
 
-  <RelatedProducts currentSlug={slug!} currentCategories={post.categories} />
-  <Footer />
+    <RelatedProducts posts={relatedPosts} />
+  <Footer /> 
 </Layout>
 
 <script define:vars={{ images: images }}>
@@ -178,7 +180,8 @@ const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
 
   function setImage(index) {
     currentIndex = (index + images.length) % images.length;
-    mainImg.src = images[currentIndex];
+    mainImg.src = 
+    [currentIndex];
     lightboxImg.src = images[currentIndex];
     thumbnails.forEach((t, i) => t.classList.toggle('active', i === currentIndex));
   }

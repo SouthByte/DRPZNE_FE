@@ -16,7 +16,7 @@ const categories: Record<string, string[]> = {
 <header class="site-header" id="siteHeader">
   <!-- Logo -->
   <a href="/" class="header-logo font-oxanium" aria-label="DRPZNE Home">
-    <img src="/src/assets/drpznewhitenobg.png" alt="DRPZNE" class="logo-img" />
+    <img src="/drpznewhitenobg.png" alt="DRPZNE" class="logo-img" />
   </a>
 
   <!-- Desktop Nav -->
@@ -64,7 +64,7 @@ const categories: Record<string, string[]> = {
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <nav class="mobile-drawer" id="mobileDrawer" aria-label="Mobile navigation">
   <div class="drawer-header">
-    <img src="/src/assets/drpznewhitenobg.png" alt="DRPZNE" style="height:32px;" />
+    <img src="/drpznewhitenobg.png" alt="DRPZNE" style="height:32px;" />
     <button class="icon-btn" id="drawerClose" aria-label="Close menu">
       <span class="material-icons">close</span>
     </button>
@@ -189,29 +189,28 @@ const categories: Record<string, string[]> = {
   });
 
   async function doSearch(q) {
-    if (!q.trim()) return closeResultsBar();
-
-    try {
-      const apiBase = window.__DRPZNE_API__ || '';
-      let posts = [];
-
-      if (apiBase) {
-        const res = await fetch(`${apiBase}/posts/search?q=${encodeURIComponent(q)}`);
-        posts = await res.json();
-      } else {
-        const res = await fetch('/src/data/postData.json');
-        const all = await res.json();
-        posts = all.filter((p) =>
-          p.title.toLowerCase().includes(q.toLowerCase()) ||
-          (p.tags || []).some((t) => t.toLowerCase().includes(q.toLowerCase()))
-        );
-      }
-
-      renderResults(posts.slice(0, 6));
-    } catch {
-      closeResultsBar();
-    }
+  if (!q.trim()) return closeResultsBar();
+  try {
+    const cmsUrl = document.documentElement.dataset.cmsUrl || 'http://localhost:3000';
+    const params = new URLSearchParams();
+    params.set('where[or][0][title][like]', q);
+    params.set('where[or][1][description][like]', q);
+    params.set('where[status][equals]', 'published');
+    params.set('depth', '1');
+    params.set('limit', '8');
+    const res = await fetch(cmsUrl + '/api/posts?' + params.toString());
+    const data = await res.json();
+    const posts = (data.docs || []).map((p) => ({
+      slug: p.slug,
+      title: p.title,
+      image: (p.heroImage?.sizes?.card?.url) || p.heroImage?.url || '/placeholder.jpg',
+      categories: [p.category?.name, p.subCategory?.name].filter(Boolean),
+    }));
+    renderResults(posts.slice(0, 6));
+  } catch {
+    closeResultsBar();
   }
+}
 
   function renderResults(posts) {
     if (!posts.length) {
@@ -291,6 +290,7 @@ const categories: Record<string, string[]> = {
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
+    justify-content:space-between;
     gap: 1.5rem;
     padding: 0 1.5rem;
   }
@@ -307,6 +307,7 @@ const categories: Record<string, string[]> = {
   .desktop-nav {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
     flex: 1;
   }
