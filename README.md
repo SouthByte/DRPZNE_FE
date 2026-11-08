@@ -1,48 +1,38 @@
-# Astro Starter Kit: Basics
+# DRPZNE
 
-```sh
-npm create astro@latest -- --template basics
+A bunch of cool shit. The public site, built with Astro 5 and Tailwind, rendered on Vercel.
+
+Content comes from the Payload CMS (DRPZNE_CMS). Pages are rendered on the server, so new posts show
+up without a rebuild. The browser never calls the CMS directly: search, "Load more" and the newsletter
+go through this site's own routes (`/api/search.json`, `/partials/posts`, `/api/subscribe`).
+
+## Environment
+
+| Variable | Description |
+|---|---|
+| `CMS_URL` | Base URL of the CMS. Local: `http://localhost:3000`. Production: `https://admin.drpzne.com` |
+
+Locally, put it in `.env` (git-ignored, see `.env.example`). On Vercel, set it under
+Settings → Environment Variables: Production points at the production CMS, Preview at the dev CMS.
+
+## Local development
+
+```bash
+npm install
+cp .env.example .env
+npm run dev   # http://localhost:4321
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+Run the CMS locally too (`pnpm dev` in DRPZNE_CMS). If the CMS isn't reachable in dev, posts fall
+back to `src/data/postData.json`. In production there is no fallback.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Routes
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+| Route | Page |
+|---|---|
+| `/` | Latest posts |
+| `/category/<category>` and `/category/<category>/<sub>` | Category listings |
+| `/<slug>` | Post |
+| `/about`, `/contact`, `/submit`, `/advertise`, `/privacy`, `/terms` | Info pages |
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Categories come from the CMS. `src/data/categories.ts` is the fallback and matches the CMS seed script.

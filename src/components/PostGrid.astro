@@ -1,0 +1,120 @@
+---
+/**
+ * Grid of post cards with a "Load more" button.
+ * Extra pages come from /partials/posts, which renders the same PostCard on the server,
+ * so loaded cards look identical to the first page and CMS text is always HTML-escaped.
+ */
+import PostCard from './PostCard.astro';
+import type { PostPage } from '../lib/api';
+
+export interface Props {
+  page: PostPage;
+  category?: string;
+  subCategory?: string;
+  emptyMessage?: string;
+}
+
+const { page, category, subCategory, emptyMessage = 'No drops here yet. Check back soon.' } = Astro.props;
+---
+
+<div class="post-grid-wrap" data-category={category} data-sub-category={subCategory}>
+  {page.posts.length === 0 ? (
+    <p class="empty-state">{emptyMessage}</p>
+  ) : (
+    <div class="posts-grid" data-posts-grid>
+      {page.posts.map((post) => <PostCard post={post} />)}
+    </div>
+  )}
+
+  {page.hasNextPage && (
+    <div class="load-more-wrap">
+      <button type="button" class="load-more-btn font-oxanium" data-load-more data-next-page="2">
+        <span data-label>Load More</span>
+        <span class="hidden" data-spinner>Loading...</span>
+      </button>
+      <p class="load-error hidden" data-load-error>Couldn't load more posts. Try again.</p>
+    </div>
+  )}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.post-grid-wrap').forEach((wrap) => {
+    const btn = wrap.querySelector<HTMLButtonElement>('[data-load-more]');
+    const grid = wrap.querySelector<HTMLElement>('[data-posts-grid]');
+    if (!btn || !grid) return;
+    const label = btn.querySelector('[data-label]')!;
+    const spinner = btn.querySelector('[data-spinner]')!;
+    const error = wrap.querySelector('[data-load-error]')!;
+
+    btn.addEventListener('click', async () => {
+      const params = new URLSearchParams({ page: btn.dataset.nextPage ?? '2' });
+      if (wrap.dataset.category) params.set('category', wrap.dataset.category);
+      if (wrap.dataset.subCategory) params.set('sub', wrap.dataset.subCategory);
+
+      btn.disabled = true;
+      label.classList.add('hidden');
+      spinner.classList.remove('hidden');
+      error.classList.add('hidden');
+      try {
+        const res = await fetch(`/partials/posts?${params}`);
+        if (!res.ok) throw new Error(String(res.status));
+        const html = await res.text();
+        const tpl = document.createElement('template');
+        tpl.innerHTML = html;
+        const meta = tpl.content.querySelector<HTMLElement>('[data-page-meta]');
+        tpl.content.querySelectorAll('.post-card').forEach((card) => grid.appendChild(card));
+        if (meta?.dataset.hasNext === 'true') {
+          btn.dataset.nextPage = String(Number(btn.dataset.nextPage ?? '2') + 1);
+        } else {
+          btn.remove();
+        }
+      } catch {
+        error.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        label.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+<style>
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 4rem 1rem;
+  }
+  .load-more-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 3rem;
+  }
+  .load-more-btn {
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.75rem 2.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: background 0.2s, color 0.2s;
+  }
+  .load-more-btn:hover { background: var(--text); color: var(--bg); }
+  .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .load-error { color: #f87171; font-size: 0.8rem; margin: 0; }
+  .hidden { display: none !important; }
+  @media (max-width: 640px) {
+    .posts-grid { gap: 1.2rem; }
+  }
+</style>

@@ -1,0 +1,52 @@
+---
+import { getCategoryTree } from '../lib/api';
+
+export interface Props {
+  /** Slug of the top-level category being viewed; omit on the home page */
+  active?: string;
+}
+
+const { active } = Astro.props;
+const categories = await getCategoryTree();
+---
+
+<nav class="filter-bar" aria-label="Categories">
+  <a href="/" class:list={['filter-pill', { active: !active }]}>All</a>
+  {categories.map((cat) => (
+    <a href={`/category/${cat.slug}`} class:list={['filter-pill', { active: active === cat.slug }]}>
+      {cat.name}
+    </a>
+  ))}
+</nav>
+
+<style>
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    padding: 0 0.5rem;
+  }
+  .filter-pill {
+    font-family: 'Oxanium', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    transition: all 0.2s;
+  }
+  .filter-pill:hover { color: var(--text); border-color: var(--border-strong); }
+  .filter-pill.active {
+    color: var(--bg);
+    background: var(--text);
+    border-color: var(--text);
+  }
+  @media (max-width: 640px) {
+    .filter-bar { gap: 0.4rem; }
+  }
+</style>

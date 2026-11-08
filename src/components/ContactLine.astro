@@ -1,0 +1,21 @@
+---
+// "Email us at …" using the contact email set in the CMS (Site Settings).
+import { getSiteSettings } from '../lib/api';
+
+export interface Props {
+  subject?: string;
+}
+
+const { subject } = Astro.props;
+const { contactEmail, socialLinks } = await getSiteSettings();
+const instagram = socialLinks?.instagram || 'https://instagram.com/drpzne';
+const href = contactEmail
+  ? `mailto:${contactEmail}${subject ? `?subject=${encodeURIComponent(subject)}` : ''}`
+  : null;
+---
+
+{href ? (
+  <p>Email us at <a href={href}>{contactEmail}</a>, or DM us on <a href={instagram} target="_blank" rel="noopener">Instagram</a>.</p>
+) : (
+  <p>The fastest way to reach us is a DM on <a href={instagram} target="_blank" rel="noopener">Instagram</a>.</p>
+)}

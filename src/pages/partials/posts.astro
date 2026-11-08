@@ -1,0 +1,19 @@
+---
+// HTML fragment used by PostGrid's "Load more" button.
+import PostCard from '../../components/PostCard.astro';
+import { getPosts } from '../../lib/api';
+
+export const partial = true;
+
+const params = Astro.url.searchParams;
+const page = Math.max(2, Number(params.get('page')) || 2);
+const result = await getPosts({
+  page,
+  category: params.get('category') ?? undefined,
+  subCategory: params.get('sub') ?? undefined,
+});
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+---
+
+<div data-page-meta data-has-next={String(result.hasNextPage)}></div>
+{result.posts.map((post) => <PostCard post={post} />)}
