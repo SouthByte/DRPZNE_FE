@@ -4,18 +4,20 @@ export interface Props {
   description?: string;
   image?: string;
 }
-import { ViewTransitions } from 'astro:transitions';
 
 const {
   title = 'DRPZNE — Gear, Style & More',
   description = 'DRPZNE covers the best drops in tactical gear, style, vehicles, tech, and everything worth owning.',
-  image = '/og-image.jpg',
+  image = '/american_banner.png',
 } = Astro.props;
+
+// Social previews need absolute image URLs
+const ogImage = new URL(image, Astro.url).toString();
 
 ---
 
 <!doctype html>
-<html lang="en" data-cms-url={import.meta.env.PUBLIC_CMS_URL || "http://localhost:3000"}>
+<html lang="en">
 
   <head>
     <meta charset="UTF-8" />
@@ -27,7 +29,7 @@ const {
     <!-- OG -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={image} />
+    <meta property="og:image" content={ogImage} />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <script>
@@ -65,6 +67,10 @@ const {
     --text-muted: #9ca3af;
     --accent: #f97316;
     --accent-hover: #fb923c;
+    --accent-dim: rgba(249, 115, 22, 0.1);
+    --text-dim: #6b7280;
+    --radius: 10px;
+    --transition: 0.2s ease;
     --nav-height: 70px;
   }
 

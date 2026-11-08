@@ -1,49 +1,38 @@
-# DRPZNE Frontend
+# DRPZNE
 
-Product catalog site built with Astro.js + Tailwind CSS.
+A bunch of cool shit. The public site, built with Astro 5 and Tailwind, rendered on Vercel.
 
-## Stack
-- **Framework**: Astro 5
-- **Styling**: Tailwind CSS 4 + CSS Variables
-- **Fonts**: Oxanium (display), IBM Plex Mono, Arimo
-- **CMS**: Backend API (with local JSON fallback for dev)
+Content comes from the Payload CMS (DRPZNE_CMS). Pages are rendered on the server, so new posts show
+up without a rebuild. The browser never calls the CMS directly: search, "Load more" and the newsletter
+go through this site's own routes (`/api/search.json`, `/partials/posts`, `/api/subscribe`).
 
-## Setup
+## Environment
+
+| Variable | Description |
+|---|---|
+| `CMS_URL` | Base URL of the CMS. Local: `http://localhost:3000`. Production: `https://admin.drpzne.com` |
+
+Locally, put it in `.env` (git-ignored, see `.env.example`). On Vercel, set it under
+Settings → Environment Variables: Production points at the production CMS, Preview at the dev CMS.
+
+## Local development
 
 ```bash
 npm install
 cp .env.example .env
-# Edit .env and set PUBLIC_API_URL to your backend
-npm run dev
+npm run dev   # http://localhost:4321
 ```
 
-## Environment Variables
+Run the CMS locally too (`pnpm dev` in DRPZNE_CMS). If the CMS isn't reachable in dev, posts fall
+back to `src/data/postData.json`. In production there is no fallback.
 
-| Variable | Description |
-|----------|-------------|
-| `PUBLIC_API_URL` | Backend API base URL (e.g. `https://api.drpzne.com`) |
+## Routes
 
-## API Expected Endpoints
+| Route | Page |
+|---|---|
+| `/` | Latest posts |
+| `/category/<category>` and `/category/<category>/<sub>` | Category listings |
+| `/<slug>` | Post |
+| `/about`, `/contact`, `/submit`, `/advertise`, `/privacy`, `/terms` | Info pages |
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /posts` | List posts. Params: `page`, `limit`, `category`, `tag` |
-| `GET /posts/:slug` | Single post by slug |
-| `GET /posts/search?q=` | Search posts |
-| `GET /posts/:slug/related` | Related posts |
-| `POST /newsletter/subscribe` | Subscribe email |
-
-## Deploy
-
-### Vercel (recommended)
-1. Push to GitHub
-2. Import repo in Vercel
-3. Set `PUBLIC_API_URL` in Vercel Environment Variables
-4. Deploy
-
-### Netlify
-1. Push to GitHub
-2. Import repo in Netlify
-3. Set `PUBLIC_API_URL` in Site Settings > Environment
-4. Build command: `npm run build`
-5. Publish dir: `dist`
+Categories come from the CMS. `src/data/categories.ts` is the fallback and matches the CMS seed script.

@@ -1,233 +1,293 @@
 /**
- * DRPZNE API Service
- * 
- * Set PUBLIC_API_URL in .env to point to your backend.
- * Falls back to local JSON when API is unavailable.
- * Set PUBLIC_SANITY_PROJECT_ID to pull from Sanity CMS instead.
+ * DRPZNE content API — reads from the Payload CMS REST API.
+ *
+ * Runs on the server only (pages and the /api/*.json endpoints), so the browser never talks to
+ * the CMS directly. The CMS address comes from the CMS_URL environment variable.
+ *
+ * In local dev, if the CMS can't be reached, posts fall back to src/data/postData.json so you can
+ * work on the UI offline. In production there is no fallback: an outage shows an empty state
+ * instead of silently serving stale sample data.
  */
+import { CMS_URL } from 'astro:env/server';
+import { FALLBACK_CATEGORIES, type CategoryNode } from '../data/categories';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface CategoryRef {
+  name: string;
+  slug: string;
+}
 
 export interface Post {
   id?: string | number;
   title: string;
   slug: string;
   publishedAt: string;
+  dropDate?: string;
   description: string;
   image: string;
-  images?: string[];
+  images: string[];
   productLink: string;
   price?: string;
   brand?: string;
-  categories: string[];
+  /** Primary category, then sub-category, when set */
+  categories: CategoryRef[];
   tags: string[];
   featured?: boolean;
-  dropDate: string;
+  affiliateDisclosure?: boolean;
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-//const CMS_URL = (import.meta.env.PUBLIC_CMS_URL || 'http://localhost:3000').replace(/\/$/, '');
-const CMS_URL = (import.meta.env.PUBLIC_CMS_URL || 'https://admin.drpzne.com').replace(/\/$/, '');
-
-// Converts relative Payload media URLs to absolute URLs
-function toAbsUrl(url?: string): string {
-  if (!url) return '/placeholder.jpg'
-  if (url.startsWith('http')) return url  // already absolute
-  return `${CMS_URL}${url}`              // prepend CMS domain
+export interface PostPage {
+  posts: Post[];
+  hasNextPage: boolean;
 }
 
-console.log('CMS_URL is:', CMS_URL); 
-// ─── REST API helpers ─────────────────────────────────────────────────────────
+export const PLACEHOLDER_IMAGE = '/placeholder.svg';
+const PAGE_SIZE = 12;
 
-async function fetchApi<T>(path: string): Promise<T> {
-  const res = await fetch(`${CMS_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+const cmsBase = CMS_URL.replace(/\/$/, '');
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Payload returns media URLs relative to the CMS (local storage) or absolute (Vercel Blob). */
+function toAbsUrl(url?: string | null): string {
+  if (!url) return PLACEHOLDER_IMAGE;
+  if (/^https?:\/\//.test(url)) return url;
+  return `${cmsBase}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+function mediaUrl(media: any, size: 'card' | 'hero' = 'card'): string {
+  if (!media || typeof media !== 'object') return PLACEHOLDER_IMAGE;
+  return toAbsUrl(media.sizes?.[size]?.url ?? media.url);
+}
+
+function toCategoryRef(cat: any): CategoryRef | null {
+  if (!cat || typeof cat !== 'object' || !cat.name) return null;
+  return { name: cat.name, slug: cat.slug };
+}
+
+function normalizePost(p: any): Post {
+  return {
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    publishedAt: p.publishedAt ?? p.createdAt,
+    dropDate: p.dropDate ?? undefined,
+    description: p.description ?? '',
+    image: mediaUrl(p.heroImage, 'hero'),
+    images: (p.images ?? [])
+      .map((i: any) => (i?.image ? mediaUrl(i.image, 'hero') : null))
+      .filter(Boolean),
+    productLink: p.productLink ?? '',
+    price: p.price ?? undefined,
+    brand: p.brand ?? undefined,
+    categories: [toCategoryRef(p.category), toCategoryRef(p.subCategory)].filter(
+      (c): c is CategoryRef => c !== null,
+    ),
+    tags: (p.tags ?? []).map((t: any) => (typeof t === 'string' ? t : t.tag)).filter(Boolean),
+    featured: Boolean(p.featured),
+    affiliateDisclosure: Boolean(p.affiliateDisclosure),
+  };
+}
+
+async function cmsFetch<T>(path: string, params?: URLSearchParams): Promise<T> {
+  const url = `${cmsBase}${path}${params ? `?${params}` : ''}`;
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error(`CMS ${res.status} for ${path}`);
   return res.json() as Promise<T>;
 }
 
-// ─── REST API functions ───────────────────────────────────────────────────────
+/** Only published posts are visible to the public API, but ask explicitly anyway. */
+function publishedPostParams(): URLSearchParams {
+  const q = new URLSearchParams();
+  q.set('where[_status][equals]', 'published');
+  q.set('depth', '2');
+  return q;
+}
 
-export async function getPosts(params?: {
+// ─── Local dev fallback ───────────────────────────────────────────────────────
+
+async function localPosts(): Promise<Post[]> {
+  const mod = await import('../data/postData.json');
+  return (mod.default as any[]).map((p) => ({
+    ...p,
+    images: p.images ?? [],
+    productLink: p.productLink ?? '',
+    categories: (p.categories ?? []).map((name: string) => ({ name, slug: name.toLowerCase() })),
+    tags: p.tags ?? [],
+  }));
+}
+
+async function withDevFallback<T>(label: string, run: () => Promise<T>, fallback: () => Promise<T>, empty: T): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.warn(`[cms] ${label} failed, using local sample data:`, (err as Error).message);
+      return fallback();
+    }
+    console.error(`[cms] ${label} failed:`, err);
+    return empty;
+  }
+}
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
+export async function getPosts(opts: {
   page?: number;
   limit?: number;
   category?: string;
-  tag?: string;
-}): Promise<Post[]> {
-  const q = new URLSearchParams();
-  if (params?.page) q.set('page', String(params.page));
-  if (params?.limit) q.set('limit', String(params.limit));
-  if (params?.category) q.set('category', params.category);
-  if (params?.tag) q.set('tag', params.tag);
-  return fetchApi<Post[]>(`/posts${q.toString() ? '?' + q.toString() : ''}`);
+  subCategory?: string;
+} = {}): Promise<PostPage> {
+  const page = opts.page ?? 1;
+  const limit = opts.limit ?? PAGE_SIZE;
+
+  return withDevFallback(
+    'getPosts',
+    async () => {
+      const q = publishedPostParams();
+      q.set('sort', '-publishedAt');
+      q.set('limit', String(limit));
+      q.set('page', String(page));
+      if (opts.subCategory) {
+        q.set('where[subCategory.slug][equals]', opts.subCategory);
+      } else if (opts.category) {
+        q.set('where[or][0][category.slug][equals]', opts.category);
+        q.set('where[or][1][subCategory.slug][equals]', opts.category);
+      }
+      const data = await cmsFetch<any>('/api/posts', q);
+      return { posts: data.docs.map(normalizePost), hasNextPage: Boolean(data.hasNextPage) };
+    },
+    async () => {
+      let all = await localPosts();
+      const slug = opts.subCategory ?? opts.category;
+      if (slug) all = all.filter((p) => p.categories.some((c) => c.slug === slug));
+      const start = (page - 1) * limit;
+      return { posts: all.slice(start, start + limit), hasNextPage: start + limit < all.length };
+    },
+    { posts: [], hasNextPage: false },
+  );
 }
 
-export async function getPostBySlug(slug: string): Promise<Post> {
-  return fetchApi<Post>(`/posts/${slug}`);
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+  return withDevFallback(
+    'getPostBySlug',
+    async () => {
+      const q = publishedPostParams();
+      q.set('where[slug][equals]', slug);
+      q.set('limit', '1');
+      const data = await cmsFetch<any>('/api/posts', q);
+      return data.docs[0] ? normalizePost(data.docs[0]) : null;
+    },
+    async () => (await localPosts()).find((p) => p.slug === slug) ?? null,
+    null,
+  );
 }
 
-export async function getRelatedPosts(slug: string, limit = 4): Promise<Post[]> {
-  return fetchApi<Post[]>(`/posts/${slug}/related?limit=${limit}`);
+export async function getRelatedPosts(post: Post, limit = 4): Promise<Post[]> {
+  const primary = post.categories[0];
+  if (!primary) return [];
+  return withDevFallback(
+    'getRelatedPosts',
+    async () => {
+      const q = publishedPostParams();
+      q.set('where[category.slug][equals]', primary.slug);
+      q.set('where[slug][not_equals]', post.slug);
+      q.set('sort', '-publishedAt');
+      q.set('limit', String(limit));
+      const data = await cmsFetch<any>('/api/posts', q);
+      return data.docs.map(normalizePost);
+    },
+    async () => (await localPosts()).filter((p) => p.slug !== post.slug).slice(0, limit),
+    [],
+  );
 }
 
-export async function searchPosts(query: string): Promise<Post[]> {
-  return fetchApi<Post[]>(`/posts/search?q=${encodeURIComponent(query)}`);
+export async function searchPosts(query: string, limit = 8): Promise<Post[]> {
+  const term = query.trim();
+  if (!term) return [];
+  return withDevFallback(
+    'searchPosts',
+    async () => {
+      const q = publishedPostParams();
+      q.set('where[or][0][title][like]', term);
+      q.set('where[or][1][description][like]', term);
+      q.set('where[or][2][brand][like]', term);
+      q.set('depth', '1');
+      q.set('limit', String(limit));
+      const data = await cmsFetch<any>('/api/posts', q);
+      return data.docs.map(normalizePost);
+    },
+    async () => {
+      const t = term.toLowerCase();
+      return (await localPosts())
+        .filter((p) => p.title.toLowerCase().includes(t) || p.description.toLowerCase().includes(t))
+        .slice(0, limit);
+    },
+    [],
+  );
 }
 
-// ─── Local JSON fallback ──────────────────────────────────────────────────────
- 
-async function getLocalPosts(): Promise<Post[]> {
-  const mod = await import('../data/postData.json');
-  return mod.default as Post[];
-}
+// ─── Categories ───────────────────────────────────────────────────────────────
 
-// ─── Sanity CMS functions ─────────────────────────────────────────────────────
+let categoryCache: { at: number; tree: CategoryNode[] } | null = null;
+const CATEGORY_TTL_MS = 5 * 60 * 1000;
 
-async function getPostsFromSanity(params?: Parameters<typeof getPosts>[0]): Promise<Post[]> {
-  const { sanityFetch, queries } = await import('./sanity');
-  let posts = await sanityFetch<Post[]>(queries.allPosts);
-  if (params?.category) {
-    posts = posts.filter(p =>
-      p.categories?.some(c => c.toLowerCase() === params.category!.toLowerCase())
-    );
-  }
-  const page = params?.page || 1;
-  const limit = params?.limit || 12;
-  return posts.slice((page - 1) * limit, page * limit);
-}
+/**
+ * Top-level categories with their sub-categories, from the CMS.
+ * Cached for a few minutes per server instance, since every page renders the header.
+ * Falls back to the built-in tree when the CMS has no categories yet.
+ */
+export async function getCategoryTree(): Promise<CategoryNode[]> {
+  if (categoryCache && Date.now() - categoryCache.at < CATEGORY_TTL_MS) return categoryCache.tree;
 
-async function getPostBySlugFromSanity(slug: string): Promise<Post | null> {
-  const { sanityFetch, queries } = await import('./sanity');
-  return sanityFetch<Post | null>(queries.postBySlug, { slug });
-}
-
-async function getRelatedPostsFromSanity(slug: string, limit = 4): Promise<Post[]> {
-  const { sanityFetch, queries } = await import('./sanity');
-  const post = await sanityFetch<Post | null>(queries.postBySlug, { slug });
-  const categories = post?.categories || [];
-  return sanityFetch<Post[]>(queries.relatedPosts, { slug, categories, limit });
-}
-
-// ─── Safe public API (auto-selects source, falls back to local JSON) ──────────
-
-export async function getPostsSafe(params?: {
-  page?: number; limit?: number; category?: string; tag?: string;
-}): Promise<Post[]> {
+  let tree = FALLBACK_CATEGORIES;
   try {
-    const q = new URLSearchParams();
-    q.set('where[status][equals]', 'published');
-    q.set('depth', '2');
-    q.set('sort', '-publishedAt');
-    q.set('limit', String(params?.limit ?? 12));
-    if (params?.page) q.set('page', String(params.page));
-    if (params?.category) {
-      q.set('where[or][0][category.slug][equals]', params.category);
-      q.set('where[or][1][subCategory.slug][equals]', params.category);
+    const q = new URLSearchParams({ limit: '500', depth: '0', sort: 'name' });
+    const data = await cmsFetch<any>('/api/categories', q);
+    const docs: any[] = data.docs ?? [];
+    const top = docs.filter((c) => !c.parent);
+    if (top.length) {
+      const order = FALLBACK_CATEGORIES.map((c) => c.slug);
+      const rank = (slug: string) => (order.indexOf(slug) === -1 ? 999 : order.indexOf(slug));
+      tree = top
+        .sort((a, b) => rank(a.slug) - rank(b.slug))
+        .map((c) => ({
+          name: c.name,
+          slug: c.slug,
+          children: docs
+            .filter((s) => s.parent === c.id)
+            .map((s) => ({ name: s.name, slug: s.slug })),
+        }));
     }
-    console.log('Fetching from CMS:', CMS_URL)  // ← add this
-    const res = await fetch(`${CMS_URL}/api/posts?${q}`, { headers: { 'Content-Type': 'application/json' } });
-    console.log('CMS response status:', res.status)  // ← and thi
-    if (!res.ok) throw new Error(`CMS ${res.status}`);
-    const data = await res.json();
-    return data.docs.map((p: any) => ({
-      ...p,
-      image: toAbsUrl(p.heroImage?.sizes?.card?.url ?? p.heroImage?.url),
-      categories: [p.category?.name, p.subCategory?.name].filter(Boolean),
-      tags: (p.tags || []).map((t: any) => typeof t === 'string' ? t : t.tag),
-      productLink: p.productLink ?? '',
-    }));
-  } catch(e) {
-    console.log('CMS fetch failed, using local JSON:', e)
-    const mod = await import('../data/postData.json');
-    const all = mod.default as Post[];
-    const page = params?.page ?? 1;
-    const limit = params?.limit ?? 12;
-    return all.slice((page - 1) * limit, page * limit);
+  } catch (err) {
+    console.warn('[cms] getCategoryTree failed, using built-in categories:', (err as Error).message);
   }
+  categoryCache = { at: Date.now(), tree };
+  return tree;
 }
 
-export async function getPostBySlugSafe(slug: string): Promise<Post | null> {
-  try {
-    const q = new URLSearchParams();
-    q.set('where[slug][equals]', slug);
-    q.set('where[status][equals]', 'published');
-    q.set('depth', '2');
-    q.set('limit', '1');
-    const res = await fetch(`${CMS_URL}/api/posts?${q}`, { headers: { 'Content-Type': 'application/json' } });
-    if (!res.ok) throw new Error(`CMS ${res.status}`);
-    console.log(res);
-    const data = await res.json();
-    console.log(data)
-    const p = data.docs[0];
-    if (!p) return null;
-    return {
-      ...p,
-      image: toAbsUrl(p.heroImage?.sizes?.card?.url ?? p.heroImage?.url),
-      categories: [p.category?.name, p.subCategory?.name].filter(Boolean),
-      tags: (p.tags || []).map((t: any) => typeof t === 'string' ? t : t.tag),
-      productLink: p.productLink ?? '',
-    };
-  } catch {
-    const mod = await import('../data/postData.json');
-    return (mod.default as Post[]).find(p => p.slug === slug) ?? null;
-  }
+/** Resolve /category/[cat] or /category/[cat]/[sub] to names for the page heading. */
+export async function findCategory(catSlug: string, subSlug?: string) {
+  const tree = await getCategoryTree();
+  const cat = tree.find((c) => c.slug === catSlug);
+  if (!cat) return null;
+  const sub = subSlug ? cat.children.find((s) => s.slug === subSlug) : undefined;
+  if (subSlug && !sub) return null;
+  return { cat, sub };
 }
 
-export async function getRelatedPostsSafe(slug: string, limit = 4): Promise<Post[]> {
-  try {
-    const post = await getPostBySlugSafe(slug);
-    if (!post) return [];
-    const catId = (post as any).category?.id;
-    if (!catId) throw new Error('no category id');
-    const q = new URLSearchParams();
-    q.set('where[status][equals]', 'published');
-    q.set('where[category][equals]', String(catId));
-    q.set('where[slug][not_equals]', slug);
-    q.set('limit', String(limit));
-    q.set('depth', '2');
-    const res = await fetch(`${CMS_URL}/api/posts?${q}`, { headers: { 'Content-Type': 'application/json' } });
-    if (!res.ok) throw new Error(`CMS ${res.status}`);
-    const data = await res.json();
-    return data.docs.map((p: any) => ({
-      ...p,
-      image: toAbsUrl(p.heroImage?.sizes?.card?.url ?? p.heroImage?.url),
-      categories: [p.category?.name, p.subCategory?.name].filter(Boolean),
-      tags: (p.tags || []).map((t: any) => typeof t === 'string' ? t : t.tag),
-      productLink: p.productLink ?? '',
-    }));
-  } catch {
-    const mod = await import('../data/postData.json');
-    return (mod.default as Post[]).filter(p => p.slug !== slug).slice(0, limit);
-  }
+// ─── Site settings ────────────────────────────────────────────────────────────
+
+export interface SiteSettings {
+  contactEmail?: string;
+  socialLinks?: { instagram?: string; twitter?: string; tiktok?: string; youtube?: string };
 }
 
-export async function searchPostsSafe(query: string): Promise<Post[]> {
-  if (!query.trim()) return [];
+export async function getSiteSettings(): Promise<SiteSettings> {
   try {
-    const q = new URLSearchParams();
-    q.set('where[or][0][title][like]', query);
-    q.set('where[or][1][description][like]', query);
-    q.set('where[or][2][brand][like]', query);
-    q.set('where[status][equals]', 'published');
-    q.set('depth', '1');
-    q.set('limit', '20');
-    const res = await fetch(`${CMS_URL}/api/posts?${q}`, { headers: { 'Content-Type': 'application/json' } });
-    if (!res.ok) throw new Error(`CMS ${res.status}`);
-    const data = await res.json();
-    return data.docs.map((p: any) => ({
-      ...p,
-      image: toAbsUrl(p.heroImage?.sizes?.card?.url ?? p.heroImage?.url),
-      categories: [p.category?.name, p.subCategory?.name].filter(Boolean),
-      tags: (p.tags || []).map((t: any) => typeof t === 'string' ? t : t.tag),
-      productLink: p.productLink ?? '',
-    }));
+    return await cmsFetch<SiteSettings>('/api/globals/site-settings', new URLSearchParams({ depth: '0' }));
   } catch {
-    const mod = await import('../data/postData.json');
-    const q = query.toLowerCase();
-    return (mod.default as Post[]).filter(p =>
-      p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
-    );
+    return {};
   }
 }
