@@ -1,16 +1,11 @@
 ---
 import '../styles/global.css';
 
-const categories: Record<string, string[]> = {
-  TACTICAL: ['Weapons', 'Hardware', 'Kit', 'Apparel', 'Accessories'],
-  TECHNOLOGY: ['Comms', 'Power', 'Optics', 'Drones', 'Smart Home'],
-  VEHICLES: ['Trucks', 'Cars', 'Motorcycles', 'Off-Road', 'Mods & Parts'],
-  FITNESS: ['Supplements', 'Workout Gear', 'Recovery', 'Martial Arts'],
-  OUTDOORS: ['Camping', 'Hunting', 'Fishing', 'Survival', 'Overlanding'],
-  HOME: ['Kitchen Gear', 'Workspace', 'Workshop', 'Furniture'],
-  VICES: ['Whiskey', 'Cigars', 'Beer', 'Cannabis'],
-  DROPS: ['New Drops', 'Limited Editions', 'Collabs', 'Flash Sales'],
-};
+import { getCategoryTree } from '../lib/api';
+
+// Nav menus come from the CMS category tree (built-in fallback if the CMS has none yet)
+const tree = await getCategoryTree();
+const categories = tree.map((c) => ({ name: c.name, slug: c.slug, children: c.children }));
 ---
 
 <header class="site-header" id="siteHeader">
@@ -21,9 +16,9 @@ const categories: Record<string, string[]> = {
 
   <!-- Desktop Nav -->
   <nav class="desktop-nav" aria-label="Main navigation">
-    {Object.keys(categories).map((cat) => (
-      <button class="nav-btn" data-cat={cat} aria-expanded="false" aria-haspopup="true">
-        {cat}
+    {categories.map((cat) => (
+      <button class="nav-btn" data-cat={cat.slug} aria-expanded="false" aria-haspopup="true">
+        {cat.name.toUpperCase()}
       </button>
     ))}
   </nav>
@@ -81,12 +76,13 @@ const categories: Record<string, string[]> = {
   </div>
 
   <div class="drawer-categories">
-    {Object.entries(categories).map(([cat, subs]) => (
+    {categories.map((cat) => (
       <details class="drawer-item">
-        <summary class="drawer-cat font-oxanium">{cat}</summary>
+        <summary class="drawer-cat font-oxanium">{cat.name}</summary>
         <ul class="drawer-subs">
-          {subs.map((sub) => (
-            <li><a href={`/category/${cat.toLowerCase()}/${sub.toLowerCase().replace(/[\s&/]+/g, '-')}`}>{sub}</a></li>
+          <li><a href={`/category/${cat.slug}`}>All {cat.name}</a></li>
+          {cat.children.map((sub) => (
+            <li><a href={`/category/${cat.slug}/${sub.slug}`}>{sub.name}</a></li>
           ))}
         </ul>
       </details>
@@ -95,6 +91,10 @@ const categories: Record<string, string[]> = {
 </nav>
 
 <script define:vars={{ categories }}>
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+  }
+
   // ── Desktop dropdown ──────────────────────────────────────────────
   const header = document.getElementById('siteHeader');
   const dropdown = document.getElementById('megaDropdown');
@@ -105,14 +105,12 @@ const categories: Record<string, string[]> = {
 
   function openDropdown(btn) {
     clearTimeout(closeTimer);
-    const cat = btn.dataset.cat;
-    const items = categories[cat] || [];
+    const cat = categories.find((c) => c.slug === btn.dataset.cat);
+    if (!cat) return;
 
-    list.innerHTML = items
-      .map(
-        (label) =>
-          `<li><a href="/category/${cat.toLowerCase()}/${label.toLowerCase().replace(/[\s&/]+/g, '-')}" role="menuitem">${label}</a></li>`
-      )
+    list.innerHTML = [{ name: `All ${cat.name}`, href: `/category/${cat.slug}` }]
+      .concat(cat.children.map((sub) => ({ name: sub.name, href: `/category/${cat.slug}/${sub.slug}` })))
+      .map((item) => `<li><a href="${escapeHtml(item.href)}" role="menuitem">${escapeHtml(item.name)}</a></li>`)
       .join('');
 
     navBtns.forEach((b) => b.classList.remove('active'));
@@ -189,28 +187,15 @@ const categories: Record<string, string[]> = {
   });
 
   async function doSearch(q) {
-  if (!q.trim()) return closeResultsBar();
-  try {
-    const cmsUrl = document.documentElement.dataset.cmsUrl || 'http://localhost:3000';
-    const params = new URLSearchParams();
-    params.set('where[or][0][title][like]', q);
-    params.set('where[or][1][description][like]', q);
-    params.set('where[status][equals]', 'published');
-    params.set('depth', '1');
-    params.set('limit', '8');
-    const res = await fetch(cmsUrl + '/api/posts?' + params.toString());
-    const data = await res.json();
-    const posts = (data.docs || []).map((p) => ({
-      slug: p.slug,
-      title: p.title,
-      image: (p.heroImage?.sizes?.card?.url) || p.heroImage?.url || '/placeholder.jpg',
-      categories: [p.category?.name, p.subCategory?.name].filter(Boolean),
-    }));
-    renderResults(posts.slice(0, 6));
-  } catch {
-    closeResultsBar();
+    if (!q.trim()) return closeResultsBar();
+    try {
+      const res = await fetch('/api/search.json?q=' + encodeURIComponent(q));
+      if (!res.ok) throw new Error(String(res.status));
+      renderResults(await res.json());
+    } catch {
+      closeResultsBar();
+    }
   }
-}
 
   function renderResults(posts) {
     if (!posts.length) {
@@ -222,13 +207,13 @@ const categories: Record<string, string[]> = {
     resultsBar.innerHTML = posts
       .map(
         (p) => `
-      <a href="/${p.slug}" class="search-card">
+      <a href="/${encodeURIComponent(p.slug)}" class="search-card">
         <div class="search-card-img">
-          <img src="${p.image}" alt="${p.title}" loading="lazy" />
+          <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" loading="lazy" />
         </div>
         <div class="search-card-info">
-          <div class="search-card-cat">${(p.categories || []).join(' / ')}</div>
-          <div class="search-card-title">${p.title}</div>
+          <div class="search-card-cat">${escapeHtml((p.categories || []).join(' / '))}</div>
+          <div class="search-card-title">${escapeHtml(p.title)}</div>
         </div>
       </a>`
       )

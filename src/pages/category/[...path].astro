@@ -1,0 +1,105 @@
+---
+// /category/<category> and /category/<category>/<sub-category>
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CategoryPills from '../../components/CategoryPills.astro';
+import PostGrid from '../../components/PostGrid.astro';
+import { findCategory, getPosts } from '../../lib/api';
+
+const [catSlug, subSlug, ...rest] = (Astro.params.path ?? '').split('/').filter(Boolean);
+const found = catSlug && rest.length === 0 ? await findCategory(catSlug, subSlug) : null;
+
+if (!found) {
+  return Astro.rewrite('/404');
+}
+
+const { cat, sub } = found;
+const page = await getPosts({ page: 1, category: cat.slug, subCategory: sub?.slug });
+const heading = sub ? sub.name : cat.name;
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+---
+
+<Layout title={`${heading} — DRPZNE`} description={`The latest ${heading.toLowerCase()} drops on DRPZNE.`}>
+  <Header />
+  <main class="category-main">
+    <nav class="breadcrumb font-mono" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span>/</span>
+      {sub ? <a href={`/category/${cat.slug}`}>{cat.name}</a> : <span class="crumb-current">{cat.name}</span>}
+      {sub && (
+        <>
+          <span>/</span>
+          <span class="crumb-current">{sub.name}</span>
+        </>
+      )}
+    </nav>
+
+    <h1 class="category-title font-oxanium">{heading}</h1>
+
+    <CategoryPills active={cat.slug} />
+
+    {cat.children.length > 0 && (
+      <nav class="sub-bar" aria-label={`${cat.name} sub-categories`}>
+        {cat.children.map((child) => (
+          <a href={`/category/${cat.slug}/${child.slug}`} class:list={['sub-link', { active: child.slug === sub?.slug }]}>
+            {child.name}
+          </a>
+        ))}
+      </nav>
+    )}
+
+    <PostGrid
+      page={page}
+      category={cat.slug}
+      subCategory={sub?.slug}
+      emptyMessage={`No ${heading} drops yet. Check back soon.`}
+    />
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .category-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 4rem;
+    min-height: 70vh;
+  }
+  .breadcrumb {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  .breadcrumb a:hover { color: var(--accent); }
+  .crumb-current { color: var(--text); }
+  .category-title {
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: clamp(1.75rem, 5vw, 3rem);
+    margin: 0 0 1.5rem;
+  }
+  .sub-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 1.25rem;
+    margin: -1.25rem 0 2.5rem;
+  }
+  .sub-link {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+  }
+  .sub-link:hover { color: var(--text); }
+  .sub-link.active { color: var(--accent); border-bottom-color: var(--accent); }
+  @media (max-width: 640px) {
+    .category-main { padding: 1.25rem 1rem 3rem; }
+  }
+</style>

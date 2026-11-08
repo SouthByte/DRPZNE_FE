@@ -3,43 +3,28 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import RelatedProducts from '../components/RelatedProducts.astro';
-import { getPostsSafe, getPostBySlugSafe, type Post, getRelatedPostsSafe } from '../lib/api';
-
-// export async function getStaticPaths() {
-//   const posts = await getPostsSafe();
-//   return posts.map(post => ({ params: { slug: post.slug } }));
-// }
+import { getPostBySlug, getRelatedPosts, PLACEHOLDER_IMAGE } from '../lib/api';
 
 const { slug } = Astro.params;
-const post = await getPostBySlugSafe(slug!);
+const post = slug ? await getPostBySlug(slug) : null;
 
 if (!post) {
-  return Astro.redirect('/404');
+  return Astro.rewrite('/404');
 }
 
-const imageUrls: string[] = (() => {
-  // post.image is already the normalized hero image URL (set in api.ts normalize function)
-  const hero = post.image ?? '/placeholder.jpg';
-
-  if (post.images && post.images.length > 0) {
-    const additional = (post.images as any[]).map((i) => {
-      if (typeof i === 'string') return i;
-      return i.image?.sizes?.card?.url ?? i.image?.url ?? null;
-    }).filter(Boolean) as string[];
-
-    return [hero, ...additional];
-  }
-
-  return [hero];
-})();
-
-const displayImages = imageUrls.length > 0 ? imageUrls : ['/placeholder.jpg'];
+const displayImages: string[] = [post.image, ...post.images].filter(Boolean);
+const [primaryCat, subCat] = post.categories;
+const categoryLinks = [
+  primaryCat && { name: primaryCat.name, href: `/category/${primaryCat.slug}` },
+  primaryCat && subCat && { name: subCat.name, href: `/category/${primaryCat.slug}/${subCat.slug}` },
+].filter(Boolean) as { name: string; href: string }[];
 
 const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
 });
 
-const relatedPosts = await getRelatedPostsSafe(slug!, 4);
+const relatedPosts = await getRelatedPosts(post, 4);
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
 ---
 
 <Layout
@@ -55,12 +40,12 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
     <nav class="breadcrumb font-mono" aria-label="Breadcrumb">
       <a href="/">Home</a>
       <span>/</span>
-      {post.categories?.[0] && (
+      {categoryLinks.map((link) => (
         <>
-          <a href={`/category/${post.categories[0].toLowerCase()}`}>{post.categories[0]}</a>
+          <a href={link.href}>{link.name}</a>
           <span>/</span>
         </>
-      )}
+      ))}
       <span class="crumb-current">{post.title}</span>
     </nav>
 
@@ -75,7 +60,7 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
             alt={post.title}
             class="main-image"
             loading="eager"
-            onerror="this.src='/placeholder.jpg'"
+            onerror={`this.onerror=null;this.src='${PLACEHOLDER_IMAGE}'`}
           />
           {displayImages.length > 1 && (
             <>
@@ -99,7 +84,7 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
                 aria-label={`Image ${i + 1}`}
               >
                 <img src={src} alt={`${post.title} ${i + 1}`} loading="lazy"
-                  onerror="this.src='/placeholder.jpg'" />
+                  onerror={`this.onerror=null;this.src='${PLACEHOLDER_IMAGE}'`} />
               </button>
             ))}
           </div>
@@ -110,8 +95,8 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
       <div class="detail-info">
         <!-- Tags -->
         <div class="detail-cats font-mono">
-          {post.categories?.map(cat => (
-            <a href={`/category/${cat.toLowerCase()}`} class="cat-tag">{cat}</a>
+          {categoryLinks.map((link) => (
+            <a href={link.href} class="cat-tag">{link.name}</a>
           ))}
         </div>
 
@@ -140,6 +125,9 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
               <span>BUY NOW</span>
               <span class="material-icons">open_in_new</span>
             </a>
+          )}
+          {post.productLink && post.affiliateDisclosure && (
+            <p class="affiliate-note font-mono">Affiliate link: DRPZNE may earn a commission if you buy through it.</p>
           )}
         </div>
 
@@ -347,6 +335,12 @@ document.getElementById('nextBtn')?.addEventListener('click', (e) => {
 .detail-info { display: flex; flex-direction: column; gap: 1.25rem; }
 
 .detail-cats { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.affiliate-note {
+  flex-basis: 100%;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+}
 .cat-tag {
   font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
   padding: 0.25rem 0.6rem; border-radius: 3px;
@@ -384,7 +378,7 @@ document.getElementById('nextBtn')?.addEventListener('click', (e) => {
 
 /* CTA */
 .detail-cta-box {
-  display: flex; align-items: center; gap: 1.5rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem;
   padding: 1.5rem;
   background: var(--bg-card);
   border: 1px solid var(--border);

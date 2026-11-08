@@ -1,5 +1,8 @@
 ---
+import { getCategoryTree } from '../lib/api';
+
 const currentYear = new Date().getFullYear();
+const categories = await getCategoryTree();
 ---
 
 <footer class="site-footer">
@@ -26,15 +29,9 @@ const currentYear = new Date().getFullYear();
     <div class="footer-links-group">
       <h4 class="footer-heading font-oxanium">Categories</h4>
       <ul class="footer-links">
-        <li><a href="/category/tactical">Tactical</a></li>
-        <li><a href="/category/style">Style</a></li>
-        <li><a href="/category/tech">Technology</a></li>
-        <li><a href="/category/vehicles">Vehicles</a></li>
-        <li><a href="/category/outdoors">Outdoors</a></li>
-        <li><a href="/category/home">Home</a></li>
-        <li><a href="/category/fitness">Fitness</a></li>
-        <li><a href="/category/vices">Vices</a></li>
-        <li><a href="/category/drops">Drops</a></li>
+        {categories.map((cat) => (
+          <li><a href={`/category/${cat.slug}`}>{cat.name}</a></li>
+        ))}
       </ul>
     </div>
 
@@ -58,8 +55,12 @@ const currentYear = new Date().getFullYear();
           placeholder="your@email.com"
           class="newsletter-input"
           id="newsletterEmail"
+          name="email"
+          autocomplete="email"
           required
         />
+        <!-- Honeypot: hidden from people, filled in by bots -->
+        <input type="text" name="company" tabindex="-1" autocomplete="off" class="hp-field" aria-hidden="true" />
         <button type="submit" class="newsletter-btn font-oxanium">Subscribe</button>
       </form>
       <p class="newsletter-note" id="newsletterNote"></p>
@@ -82,28 +83,38 @@ const currentYear = new Date().getFullYear();
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = (document.getElementById('newsletterEmail') as HTMLInputElement).value;
+    const data = new FormData(form as HTMLFormElement);
+    const button = (form as HTMLFormElement).querySelector('button');
+    if (button) button.disabled = true;
 
     try {
-      const apiBase = (window as any).__DRPZNE_API__ || '';
-      if (apiBase) {
-        await fetch(`${apiBase}/newsletter/subscribe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-      }
-      note.textContent = '✓ You\'re in. Stay tuned.';
-      note.style.color = '#4ade80';
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.get('email'), company: data.get('company') }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      note!.textContent = "✓ You're in. Stay tuned.";
+      note!.style.color = '#4ade80';
       (form as HTMLFormElement).reset();
     } catch {
-      note.textContent = 'Something went wrong. Try again.';
-      note.style.color = '#f87171';
+      note!.textContent = 'Something went wrong. Try again.';
+      note!.style.color = '#f87171';
+    } finally {
+      if (button) button.disabled = false;
     }
   });
 </script>
 
 <style>
+  .hp-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
   .site-footer {
     background: var(--bg-card);
     border-top: 1px solid var(--border);
