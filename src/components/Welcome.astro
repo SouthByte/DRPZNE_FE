@@ -3,7 +3,7 @@ import { getPostsSafe as getPosts, getPostsSafe } from '../lib/api';
 import type { Post } from '../lib/api';
 
 const posts: Post[] = await getPostsSafe({ page: 1, limit: 12 });
-
+console.log(posts);
 ---
 
 <section class="catalog-section">
@@ -38,7 +38,7 @@ const posts: Post[] = await getPostsSafe({ page: 1, limit: 12 });
           <h3 class="card-title font-oxanium">{post.title}</h3>
           <p class="card-desc">{post.description}</p>
           <div class="card-footer">
-            <span class="card-date">{new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            <span class="card-date">{new Date(post.dropDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             <span class="card-cta">Read More →</span>
           </div>
         </div>
@@ -127,7 +127,7 @@ loadBtn?.addEventListener('click', async () => {
             <h3 class="card-title font-oxanium">${post.title}</h3>
             <p class="card-desc">${post.description}</p>
             <div class="card-footer">
-              <span class="card-date">${new Date(post.publishedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+              <span class="card-date">${new Date(post.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
               <span class="card-cta">Read More →</span>
             </div>
           </div>`;
@@ -135,7 +135,6 @@ loadBtn?.addEventListener('click', async () => {
       });
 
     } catch (err) {
-      console.error('Load more failed:', err);
     } finally {
       loadText.classList.remove('hidden');
       loadSpinner.classList.add('hidden');
@@ -183,7 +182,7 @@ loadBtn?.addEventListener('click', async () => {
   /* ── Grid ── */
   .posts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 1.5rem;
     max-width: 1400px;
     margin: 0 auto;

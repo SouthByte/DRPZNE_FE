@@ -1,14 +1,12 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import vercel from '@astrojs/vercel/serverless';
 
 export default defineConfig({
-  output: 'static',
+  output: 'server',
+  adapter: vercel(),
   vite: {
     plugins: [tailwindcss()],
-    build: {
-      // Use esbuild for CSS minification (more lenient than lightningcss)
-      cssMinify: 'esbuild',
-    },
+    build: { cssMinify: 'esbuild' },
   },
 });

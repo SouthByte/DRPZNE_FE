@@ -22,11 +22,13 @@ export interface Post {
   categories: string[];
   tags: string[];
   featured?: boolean;
+  dropDate: string;
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const CMS_URL = (import.meta.env.PUBLIC_CMS_URL || 'http://localhost:3000').replace(/\/$/, '');
+//const CMS_URL = (import.meta.env.PUBLIC_CMS_URL || 'http://localhost:3000').replace(/\/$/, '');
+const CMS_URL = (import.meta.env.PUBLIC_CMS_URL || 'https://admin.drpzne.com').replace(/\/$/, '');
 
 // Converts relative Payload media URLs to absolute URLs
 function toAbsUrl(url?: string): string {
@@ -34,6 +36,8 @@ function toAbsUrl(url?: string): string {
   if (url.startsWith('http')) return url  // already absolute
   return `${CMS_URL}${url}`              // prepend CMS domain
 }
+
+console.log('CMS_URL is:', CMS_URL); 
 // ─── REST API helpers ─────────────────────────────────────────────────────────
 
 async function fetchApi<T>(path: string): Promise<T> {
@@ -122,7 +126,9 @@ export async function getPostsSafe(params?: {
       q.set('where[or][0][category.slug][equals]', params.category);
       q.set('where[or][1][subCategory.slug][equals]', params.category);
     }
+    console.log('Fetching from CMS:', CMS_URL)  // ← add this
     const res = await fetch(`${CMS_URL}/api/posts?${q}`, { headers: { 'Content-Type': 'application/json' } });
+    console.log('CMS response status:', res.status)  // ← and thi
     if (!res.ok) throw new Error(`CMS ${res.status}`);
     const data = await res.json();
     return data.docs.map((p: any) => ({
@@ -132,7 +138,8 @@ export async function getPostsSafe(params?: {
       tags: (p.tags || []).map((t: any) => typeof t === 'string' ? t : t.tag),
       productLink: p.productLink ?? '',
     }));
-  } catch {
+  } catch(e) {
+    console.log('CMS fetch failed, using local JSON:', e)
     const mod = await import('../data/postData.json');
     const all = mod.default as Post[];
     const page = params?.page ?? 1;
@@ -150,7 +157,9 @@ export async function getPostBySlugSafe(slug: string): Promise<Post | null> {
     q.set('limit', '1');
     const res = await fetch(`${CMS_URL}/api/posts?${q}`, { headers: { 'Content-Type': 'application/json' } });
     if (!res.ok) throw new Error(`CMS ${res.status}`);
+    console.log(res);
     const data = await res.json();
+    console.log(data)
     const p = data.docs[0];
     if (!p) return null;
     return {

@@ -4,12 +4,14 @@ export interface Props {
   description?: string;
   image?: string;
 }
+import { ViewTransitions } from 'astro:transitions';
 
 const {
   title = 'DRPZNE — Gear, Style & More',
   description = 'DRPZNE covers the best drops in tactical gear, style, vehicles, tech, and everything worth owning.',
   image = '/og-image.jpg',
 } = Astro.props;
+
 ---
 
 <!doctype html>
@@ -22,14 +24,16 @@ const {
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
-
     <!-- OG -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={image} />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-
+    <script>
+      import { inject } from '@vercel/analytics';
+      inject();
+    </script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -44,6 +48,7 @@ const {
     <slot />
   </body>
 </html>
+
 
 <style is:global>
   *, *::before, *::after {

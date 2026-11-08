@@ -5,10 +5,10 @@ import Footer from '../components/Footer.astro';
 import RelatedProducts from '../components/RelatedProducts.astro';
 import { getPostsSafe, getPostBySlugSafe, type Post, getRelatedPostsSafe } from '../lib/api';
 
-export async function getStaticPaths() {
-  const posts = await getPostsSafe();
-  return posts.map(post => ({ params: { slug: post.slug } }));
-}
+// export async function getStaticPaths() {
+//   const posts = await getPostsSafe();
+//   return posts.map(post => ({ params: { slug: post.slug } }));
+// }
 
 const { slug } = Astro.params;
 const post = await getPostBySlugSafe(slug!);
@@ -17,7 +17,24 @@ if (!post) {
   return Astro.redirect('/404');
 }
 
-const images = post.images?.length ? post.images : [post.image];
+const imageUrls: string[] = (() => {
+  // post.image is already the normalized hero image URL (set in api.ts normalize function)
+  const hero = post.image ?? '/placeholder.jpg';
+
+  if (post.images && post.images.length > 0) {
+    const additional = (post.images as any[]).map((i) => {
+      if (typeof i === 'string') return i;
+      return i.image?.sizes?.card?.url ?? i.image?.url ?? null;
+    }).filter(Boolean) as string[];
+
+    return [hero, ...additional];
+  }
+
+  return [hero];
+})();
+
+const displayImages = imageUrls.length > 0 ? imageUrls : ['/placeholder.jpg'];
+
 const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
 });
@@ -54,16 +71,16 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
         <div class="carousel-main-wrap">
           <img
             id="mainImage"
-            src={images[0]}
+            src={displayImages[0]}
             alt={post.title}
             class="main-image"
             loading="eager"
             onerror="this.src='/placeholder.jpg'"
           />
-          {images.length > 1 && (
+          {displayImages.length > 1 && (
             <>
-              <button class="carousel-arrow left" id="prevBtn" aria-label="Previous image">&#8249;</button>
-              <button class="carousel-arrow right" id="nextBtn" aria-label="Next image">&#8250;</button>
+              <button type="button" class="carousel-arrow left" id="prevBtn">&#8249;</button>
+              <button type="button" class="carousel-arrow right" id="nextBtn">&#8250;</button>
             </>
           )}
           <!-- Lightbox trigger -->
@@ -72,9 +89,9 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
           </button>
         </div>
 
-        {images.length > 1 && (
+        {displayImages.length > 1 && (
           <div class="thumbnails" id="thumbnails">
-            {images.map((src, i) => (
+            {displayImages.map((src, i) => (
               <button
                 class={`thumb-btn ${i === 0 ? 'active' : ''}`}
                 data-index={i}
@@ -104,7 +121,6 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
           {post.brand && <span class="meta-brand">{post.brand}</span>}
           <span class="meta-date">{publishedDate}</span>
         </div>
-
         <div class="detail-divider"></div>
 
         <p class="detail-description">{post.description}</p>
@@ -170,7 +186,7 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
   <Footer /> 
 </Layout>
 
-<script define:vars={{ images: images }}>
+<script define:vars={{ images: displayImages }}>
   let currentIndex = 0;
 
   const mainImg = document.getElementById('mainImage');
@@ -180,15 +196,23 @@ const relatedPosts = await getRelatedPostsSafe(slug!, 4);
 
   function setImage(index) {
     currentIndex = (index + images.length) % images.length;
-    mainImg.src = 
-    [currentIndex];
+    mainImg.src = images[currentIndex];
     lightboxImg.src = images[currentIndex];
     thumbnails.forEach((t, i) => t.classList.toggle('active', i === currentIndex));
   }
 
   // Carousel arrows
-  document.getElementById('prevBtn')?.addEventListener('click', () => setImage(currentIndex - 1));
-  document.getElementById('nextBtn')?.addEventListener('click', () => setImage(currentIndex + 1));
+document.getElementById('prevBtn')?.addEventListener('click', (e) => {
+  e.preventDefault()
+  e.stopPropagation()
+  setImage(currentIndex - 1)  // ← 'currentIndex' is correct
+})
+
+document.getElementById('nextBtn')?.addEventListener('click', (e) => {
+  e.preventDefault()
+  e.stopPropagation()
+  setImage(currentIndex + 1)  // ← 'currentIndex' is correct
+})
 
   // Thumbnails
   thumbnails.forEach(btn => {
